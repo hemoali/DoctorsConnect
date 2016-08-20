@@ -7,7 +7,9 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
+import android.util.Log;
 
+import ibrahim.radwan.doctorsconnect.Utils.BCrypt;
 import ibrahim.radwan.doctorsconnect.Utils.InvalidDoctorIDException;
 
 /**
@@ -118,6 +120,7 @@ public class Database extends SQLiteOpenHelper {
      * @return user_id
      */
     public long insertUser (ContentValues values) throws SQLException {
+        values.put(Contract.UserEntry.COLUMN_USER_PASS, BCrypt.hashpw(values.getAsString(Contract.UserEntry.COLUMN_USER_PASS), BCrypt.gensalt()));
         long user_id = getWritableDatabase().insert(Contract.UserEntry.TABLE_USERS, "", values);
         if (user_id <= 0) {
             throw new SQLException("Failed to add new user");
@@ -136,14 +139,43 @@ public class Database extends SQLiteOpenHelper {
         SQLiteQueryBuilder sqliteQueryBuilder = new SQLiteQueryBuilder();
         sqliteQueryBuilder.setTables(Contract.UserEntry.TABLE_USERS);
         Cursor cursor = sqliteQueryBuilder.query(getReadableDatabase(),
-                new String[]{Contract.UserEntry.COLUMN_USER_ID, Contract.UserEntry.COLUMN_USER_TYPE},
-                Contract.UserEntry.COLUMN_USER_EMAIL + " = ? AND " + Contract.UserEntry.COLUMN_USER_PASS + " = ?",
-                new String[]{values.getAsString(Contract.UserEntry.COLUMN_USER_EMAIL), values.getAsString(Contract.UserEntry.COLUMN_USER_PASS)},
+                new String[]{Contract.UserEntry.COLUMN_USER_ID, Contract.UserEntry.COLUMN_USER_PASS, Contract.UserEntry.COLUMN_USER_TYPE},
+                Contract.UserEntry.COLUMN_USER_EMAIL + " = ?",
+                new String[]{values.getAsString(Contract.UserEntry.COLUMN_USER_EMAIL)},
                 null,
                 null,
                 "");
-        return cursor;
+        if (cursor.moveToFirst()) {
+            Log.d("TAG", values.getAsString(Contract.UserEntry.COLUMN_USER_PASS));
+            Log.d("TAG", cursor.getString(cursor.getColumnIndex(Contract.UserEntry.COLUMN_USER_PASS)));
+
+            if (BCrypt.checkpw(values.getAsString(Contract.UserEntry.COLUMN_USER_PASS), cursor.getString(cursor.getColumnIndex(Contract.UserEntry.COLUMN_USER_PASS)))) {
+                Log.d("TAG", "Matches");
+                return cursor;
+            }
+        }
+        return null;
     }
+
+//    public Cursor userLogin (ContentValues values) {
+//        //ToDo: encrypt password if time avaliable
+//        SQLiteQueryBuilder sqliteQueryBuilder = new SQLiteQueryBuilder();
+//        sqliteQueryBuilder.setTables(Contract.UserEntry.TABLE_USERS);
+//        Cursor cursor = sqliteQueryBuilder.query(getReadableDatabase(),
+//                new String[]{Contract.UserEntry.COLUMN_USER_ID, Contract.UserEntry.COLUMN_USER_PASS, Contract.UserEntry.COLUMN_USER_TYPE},
+//                Contract.UserEntry.COLUMN_USER_EMAIL + " = ?",
+//                new String[]{values.getAsString(Contract.UserEntry.COLUMN_USER_EMAIL)},
+//                null,
+//                null,
+//                "");
+//        if (cursor.moveToFirst()) {
+//
+//            if (BCrypt.checkpw(values.getAsString(Contract.UserEntry.COLUMN_USER_PASS), cursor.getString(cursor.getColumnIndex(Contract.UserEntry.COLUMN_USER_PASS)))) {
+//                return cursor;
+//            }
+//        }
+//        return null;
+//    }
 
     /**
      * @return All doctors

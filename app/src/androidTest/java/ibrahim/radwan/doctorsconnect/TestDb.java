@@ -226,7 +226,10 @@ public class TestDb extends AndroidTestCase {
         assertTrue("Error: The database doesn't contain all of the required status values entries",
                 inviteStatusListColumnHashSet.isEmpty());
 
+        c.close();
         db.close();
+        userTypeCursor.close();
+        invitesStatusCursor.close();
     }
 
     public void testUser () throws Throwable {
@@ -276,7 +279,7 @@ public class TestDb extends AndroidTestCase {
         values.put(Contract.UserEntry.COLUMN_USER_EMAIL, "ex2@ex2.com");
         values.put(Contract.UserEntry.COLUMN_USER_PASS, "exexex");
         c = database.userLogin(values);
-        assertFalse("Error fetching users", c.moveToFirst());
+        assertFalse("Error fetching users", c != null && c.moveToFirst());
         //Insert Admin
         values = new ContentValues();
         values.put(Contract.UserEntry.COLUMN_USER_EMAIL, "exADMIN@ex.com");
@@ -288,6 +291,9 @@ public class TestDb extends AndroidTestCase {
         c = database.fetchDoctors();
         c.moveToFirst();
         assertTrue("Error: cannot fetch doctor !!", c.getCount() == 1 && c.getString(c.getColumnIndex(Contract.UserEntry.COLUMN_USER_EMAIL)).equals("ex@ex.com"));
+        c.close();
+        db.close();
+        database.close();
     }
 
     public void testTopics () {
@@ -303,7 +309,7 @@ public class TestDb extends AndroidTestCase {
         try {
             long id = database.insertTopic(values);
             fail("Error: invalid topic inserted: no such doctor");
-        } catch (SQLException|InvalidDoctorIDException e) {
+        } catch (SQLException | InvalidDoctorIDException e) {
         }
         // Insert user to test inset null topic
         values = new ContentValues();
@@ -323,7 +329,7 @@ public class TestDb extends AndroidTestCase {
         try {
             long id = database.insertTopic(values);
             fail("Error: inserting null topic worked !!!");
-        } catch (SQLException|InvalidDoctorIDException e) {
+        } catch (SQLException | InvalidDoctorIDException e) {
         }
         // Insert user to test inset good topic
         values = new ContentValues();
@@ -332,7 +338,7 @@ public class TestDb extends AndroidTestCase {
         try {
             long id = database.insertTopic(values);
             assertFalse("Error inserting topic", id == -1);
-        } catch (SQLException|InvalidDoctorIDException e) {
+        } catch (SQLException | InvalidDoctorIDException e) {
             fail("Error inserting topic");
         }
 
@@ -340,7 +346,9 @@ public class TestDb extends AndroidTestCase {
         Cursor topicsCursor = database.fetchTopics();
 
         assertTrue("Error: No Records returned from topics query", topicsCursor.getCount() == 1);
-
+        topicsCursor.close();
+        db.close();
+        database.close();
     }
 
     public void testConf () {
@@ -368,7 +376,7 @@ public class TestDb extends AndroidTestCase {
         try {
             long id = database.insertTopic(values);
             assertFalse("Error inserting topic", id == -1);
-        } catch (SQLException|InvalidDoctorIDException e) {
+        } catch (SQLException | InvalidDoctorIDException e) {
             fail("Error inserting topic");
         }
         // Insert invalid topic-id-conf
@@ -437,6 +445,9 @@ public class TestDb extends AndroidTestCase {
         database.deleteConf("1");
         c = database.fetchConfs();
         assertTrue("Error: cannot delete conf !!", c.getCount() == 0);
+        db.close();
+        database.close();
+        c.close();
     }
 
     public void testInvites () {
@@ -465,7 +476,7 @@ public class TestDb extends AndroidTestCase {
         try {
             id = database.insertTopic(values);
             assertFalse("Error inserting topic", id == -1);
-        } catch (SQLException|InvalidDoctorIDException e) {
+        } catch (SQLException | InvalidDoctorIDException e) {
             fail("Error inserting topic");
         }
 
@@ -533,7 +544,7 @@ public class TestDb extends AndroidTestCase {
         try {
             id = database.insertInvite(values);
             assertFalse("Error: cannot insert valid conf", id == -1);
-        } catch (SQLException|InvalidDoctorIDException e) {
+        } catch (SQLException | InvalidDoctorIDException e) {
             fail("Error: cannot insert valid conf");
         }
         //accept Invite
@@ -545,5 +556,8 @@ public class TestDb extends AndroidTestCase {
         Cursor c = db.query(Contract.InvitesEntry.TABLE_INVITES, null, null, null, null, null, null);
         c.moveToFirst();
         assertTrue("Error, the invite isn't updated as expected!!", c.getString(c.getColumnIndex(Contract.InvitesEntry.COLUMN_STATUS_ID)).equals(Contract.InviteStatusEntry.INVITE_STATUS_REJECTED_ID));
+        c.close();
+        db.close();
+        database.close();
     }
 }
