@@ -553,11 +553,19 @@ public class TestDb extends AndroidTestCase {
         assertTrue(database.rejectInvite("1"));
 
         //Check if updated to rejected
-        Cursor c = db.query(Contract.InvitesEntry.TABLE_INVITES, null, null, null, null, null, null);
+        values = new ContentValues();
+        values.put(Contract.InvitesEntry.COLUMN_DOC_ID, "1");
+        Cursor c = database.fetchInvites(values);
         c.moveToFirst();
         assertTrue("Error, the invite isn't updated as expected!!", c.getString(c.getColumnIndex(Contract.InvitesEntry.COLUMN_STATUS_ID)).equals(Contract.InviteStatusEntry.INVITE_STATUS_REJECTED_ID));
         c.close();
         db.close();
         database.close();
+    }
+
+    @Override
+    protected void tearDown () throws Exception {
+        super.tearDown();
+        mContext.deleteDatabase(Contract.DATABASE_NAME);
     }
 }

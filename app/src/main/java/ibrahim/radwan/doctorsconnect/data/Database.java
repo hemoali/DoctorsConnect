@@ -7,7 +7,6 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
-import android.util.Log;
 
 import ibrahim.radwan.doctorsconnect.Utils.BCrypt;
 import ibrahim.radwan.doctorsconnect.Utils.InvalidDoctorIDException;
@@ -135,7 +134,6 @@ public class Database extends SQLiteOpenHelper {
      * @return user_id (-1: false data)
      */
     public Cursor userLogin (ContentValues values) {
-        //ToDo: encrypt password if time avaliable
         SQLiteQueryBuilder sqliteQueryBuilder = new SQLiteQueryBuilder();
         sqliteQueryBuilder.setTables(Contract.UserEntry.TABLE_USERS);
         Cursor cursor = sqliteQueryBuilder.query(getReadableDatabase(),
@@ -146,36 +144,12 @@ public class Database extends SQLiteOpenHelper {
                 null,
                 "");
         if (cursor.moveToFirst()) {
-            Log.d("TAG", values.getAsString(Contract.UserEntry.COLUMN_USER_PASS));
-            Log.d("TAG", cursor.getString(cursor.getColumnIndex(Contract.UserEntry.COLUMN_USER_PASS)));
-
             if (BCrypt.checkpw(values.getAsString(Contract.UserEntry.COLUMN_USER_PASS), cursor.getString(cursor.getColumnIndex(Contract.UserEntry.COLUMN_USER_PASS)))) {
-                Log.d("TAG", "Matches");
                 return cursor;
             }
         }
         return null;
     }
-
-//    public Cursor userLogin (ContentValues values) {
-//        //ToDo: encrypt password if time avaliable
-//        SQLiteQueryBuilder sqliteQueryBuilder = new SQLiteQueryBuilder();
-//        sqliteQueryBuilder.setTables(Contract.UserEntry.TABLE_USERS);
-//        Cursor cursor = sqliteQueryBuilder.query(getReadableDatabase(),
-//                new String[]{Contract.UserEntry.COLUMN_USER_ID, Contract.UserEntry.COLUMN_USER_PASS, Contract.UserEntry.COLUMN_USER_TYPE},
-//                Contract.UserEntry.COLUMN_USER_EMAIL + " = ?",
-//                new String[]{values.getAsString(Contract.UserEntry.COLUMN_USER_EMAIL)},
-//                null,
-//                null,
-//                "");
-//        if (cursor.moveToFirst()) {
-//
-//            if (BCrypt.checkpw(values.getAsString(Contract.UserEntry.COLUMN_USER_PASS), cursor.getString(cursor.getColumnIndex(Contract.UserEntry.COLUMN_USER_PASS)))) {
-//                return cursor;
-//            }
-//        }
-//        return null;
-//    }
 
     /**
      * @return All doctors
@@ -352,5 +326,21 @@ public class Database extends SQLiteOpenHelper {
             return (getWritableDatabase().update(Contract.InvitesEntry.TABLE_INVITES, values, Contract.InvitesEntry.COLUMN_INVITE_ID + "=?", new String[]{id}) == 1);
         }
         return false;
+    }
+
+    /**
+     * @return All invites
+     */
+    public Cursor fetchInvites (ContentValues values) {
+        SQLiteQueryBuilder sqliteQueryBuilder = new SQLiteQueryBuilder();
+        sqliteQueryBuilder.setTables(Contract.InvitesEntry.TABLE_INVITES);
+        Cursor cursor = sqliteQueryBuilder.query(getReadableDatabase(),
+                null,
+                Contract.InvitesEntry.COLUMN_DOC_ID + " = ?",
+                new String[]{values.getAsString(Contract.InvitesEntry.COLUMN_DOC_ID)},
+                null,
+                null,
+                "");
+        return cursor;
     }
 }
