@@ -92,8 +92,19 @@ public class Contract {
     }
 
     public static final class ConfsEntry {
-        public static final Uri CONTENT_URI =
-                BASE_CONTENT_URI.buildUpon().appendPath(PATH_CONFS).build();
+        public static final String PATH_GET_CONFS = "get";
+        public static final String PATH_ADD_CONF = "add";
+        public static final String PATH_UPDATE_CONF = "update";
+        public static final String PATH_DELETE_CONF = "delete";
+
+        public static final Uri CONTENT_URI_GET_CONFS =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_CONFS).appendPath(PATH_GET_CONFS).build();
+        public static final Uri CONTENT_URI_ADD_CONF =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_CONFS).appendPath(PATH_ADD_CONF).build();
+        public static final Uri CONTENT_URI_UPDATE_CONF =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_CONFS).appendPath(PATH_UPDATE_CONF).build();
+        public static final Uri CONTENT_URI_DELETE_CONF =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_CONFS).appendPath(PATH_DELETE_CONF).build();
 
         public static final String TABLE_CONFS = "confs";
         public static final String COLUMN_CONF_ID = "conf_id";
@@ -104,8 +115,15 @@ public class Contract {
     }
 
     public static final class TopicEntry {
-        public static final Uri CONTENT_URI =
-                BASE_CONTENT_URI.buildUpon().appendPath(PATH_TOPICS).build();
+        public static final String PATH_GET_TOPICS = "get";
+        public static final String PATH_ADD_TOPIC = "add";
+
+
+        public static final Uri CONTENT_URI_GET_TOPICS =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_TOPICS).appendPath(PATH_GET_TOPICS).build();
+
+        public static final Uri CONTENT_URI_ADD_TOPIC =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_TOPICS).appendPath(PATH_ADD_TOPIC).build();
 
         public static final String TABLE_TOPICS = "topics";
         public static final String COLUMN_TOPIC_ID = "topic_id";

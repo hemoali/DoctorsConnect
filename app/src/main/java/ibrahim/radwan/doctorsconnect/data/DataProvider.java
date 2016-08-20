@@ -8,7 +8,6 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 /**
  * Created by ibrahimradwan on 8/20/16.
@@ -43,18 +42,18 @@ public class DataProvider extends ContentProvider {
         matcher.addURI(authority, Contract.PATH_USERS + "/" + Contract.UserEntry.PATH_USERS_LOGIN, LOGIN_USER);
         matcher.addURI(authority, Contract.PATH_USERS, GET_USERS);
 
-        matcher.addURI(authority, Contract.PATH_INVITES + "/get/#", GET_INVITES);
-        matcher.addURI(authority, Contract.PATH_INVITES + "/accept", ACCEPT_INVITE);
-        matcher.addURI(authority, Contract.PATH_INVITES + "/reject", REJECT_INVITE);
+        matcher.addURI(authority, Contract.PATH_INVITES + "/" + Contract.InvitesEntry.PATH_GET_INVITES + "/#", GET_INVITES);
+        matcher.addURI(authority, Contract.PATH_INVITES + "/" + Contract.InvitesEntry.PATH_ACCEPT_INVITE, ACCEPT_INVITE);
+        matcher.addURI(authority, Contract.PATH_INVITES + "/" + Contract.InvitesEntry.PATH_REJECT_INVITE, REJECT_INVITE);
         matcher.addURI(authority, Contract.PATH_INVITES + "/" + Contract.InvitesEntry.PATH_ADD_INVITE, ADD_INVITE);
 
-        matcher.addURI(authority, Contract.PATH_CONFS + "add/#/*/*", ADD_CONF);
-        matcher.addURI(authority, Contract.PATH_CONFS, GET_CONFS);
-        matcher.addURI(authority, Contract.PATH_CONFS + "update/#/*/*", UPDATE_CONF);
-        matcher.addURI(authority, Contract.PATH_CONFS + "/#", DELETE_CONF);
+        matcher.addURI(authority, Contract.PATH_CONFS + "/" + Contract.ConfsEntry.PATH_ADD_CONF, ADD_CONF);
+        matcher.addURI(authority, Contract.PATH_CONFS + "/" + Contract.ConfsEntry.PATH_GET_CONFS, GET_CONFS);
+        matcher.addURI(authority, Contract.PATH_CONFS + "/" + Contract.ConfsEntry.PATH_UPDATE_CONF, UPDATE_CONF);
+        matcher.addURI(authority, Contract.PATH_CONFS + "/" + Contract.ConfsEntry.PATH_DELETE_CONF + "/#", DELETE_CONF);
 
-        matcher.addURI(authority, Contract.PATH_TOPICS + "/#/*", ADD_TOPIC);
-        matcher.addURI(authority, Contract.PATH_TOPICS, GET_TOPICS);
+        matcher.addURI(authority, Contract.PATH_TOPICS + "/" + Contract.TopicEntry.PATH_ADD_TOPIC, ADD_TOPIC);
+        matcher.addURI(authority, Contract.PATH_TOPICS + "/" + Contract.TopicEntry.PATH_GET_TOPICS, GET_TOPICS);
 
         return matcher;
     }
@@ -69,7 +68,6 @@ public class DataProvider extends ContentProvider {
     @Nullable
     @Override
     public Cursor query (Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-        Log.v("TAG", uriMatcher.match(uri) + "");
         if (uriMatcher.match(uri) == GET_USERS) {
             return database.fetchDoctors();
         } else if (uriMatcher.match(uri) == LOGIN_USER) {
@@ -116,13 +114,31 @@ public class DataProvider extends ContentProvider {
                 return null;
             }
         } else if (uriMatcher.match(uri) == ADD_CONF) {
+            try {
+
+                long id = database.insertConf(contentValues);
+                Uri returnUri = ContentUris.withAppendedId(Contract.ConfsEntry.CONTENT_URI_ADD_CONF, id);
+                return returnUri;
+            } catch (Exception e) {
+                return null;
+            }
         } else if (uriMatcher.match(uri) == ADD_TOPIC) {
+            try {
+                long id = database.insertTopic(contentValues);
+                Uri returnUri = ContentUris.withAppendedId(Contract.TopicEntry.CONTENT_URI_ADD_TOPIC, id);
+                return returnUri;
+            } catch (Exception e) {
+                return null;
+            }
         }
         return null;
     }
 
     @Override
     public int delete (Uri uri, String s, String[] strings) {
+        if (uriMatcher.match(uri) == DELETE_CONF) {
+            if (database.deleteConf(uri.getPathSegments().get(2))) return 1;
+        }
         return 0;
     }
 
@@ -133,6 +149,9 @@ public class DataProvider extends ContentProvider {
             if (update) return 1;
         } else if (uriMatcher.match(uri) == REJECT_INVITE) {
             boolean update = database.rejectInvite(strings[0]);
+            if (update) return 1;
+        } else if (uriMatcher.match(uri) == UPDATE_CONF) {
+            boolean update = database.updateConf(strings[0], contentValues);
             if (update) return 1;
         }
         return 0;
