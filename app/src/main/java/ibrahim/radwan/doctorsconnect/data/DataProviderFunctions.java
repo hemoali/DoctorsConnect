@@ -6,7 +6,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.v4.content.CursorLoader;
-import android.util.Log;
 
 import ibrahim.radwan.doctorsconnect.Models.User;
 import ibrahim.radwan.doctorsconnect.Utils.Topic;
@@ -77,6 +76,14 @@ public class DataProviderFunctions {
         return u;
     }
 
+    public long AddTopic (String doc_id, String title, Context context) {
+        ContentValues values = new ContentValues();
+        values.put(Contract.TopicEntry.COLUMN_DOC_ID, doc_id);
+        values.put(Contract.TopicEntry.COLUMN_TOPIC_TITLE, title);
+        Uri uri = context.getContentResolver().insert(Contract.TopicEntry.CONTENT_URI_ADD_TOPIC, values);
+        return ContentUris.parseId(uri);
+    }
+
     public Cursor getTopics (Context context) {
         CursorLoader cursorLoader = new CursorLoader(context, Contract.TopicEntry.CONTENT_URI_GET_TOPICS,
                 null, null, null, null);
@@ -104,8 +111,15 @@ public class DataProviderFunctions {
                 null, null, null, null);
         Cursor c = cursorLoader.loadInBackground();
         c.moveToFirst();
-        Log.e("TAGS", "" + c.getCount());
         return c;
+    }
+
+    public void AddConf (String name, String time, String topic_id, Context context) {
+        ContentValues values = new ContentValues();
+        values.put(Contract.ConfsEntry.COLUMN_CONF_NAME, name);
+        values.put(Contract.ConfsEntry.COLUMN_CONF_DATETIME, time);
+        values.put(Contract.ConfsEntry.COLUMN_TOPIC_ID, topic_id);
+        Uri uri = context.getContentResolver().insert(Contract.ConfsEntry.CONTENT_URI_ADD_CONF, values);
     }
 
 }

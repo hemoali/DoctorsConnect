@@ -26,4 +26,10 @@
     <string name="topics">Topics</string>
     <string name="invites">Invites</string>
     <string name="no_data">No Data</string>
+    <string name="conference_name">Conference Name</string>
+    <string name="new_conference">New Conference</string>
+    <string name="no_topics">No Topics</string>
+    <string name="conference_time">Conference Time</string>
+    <string name="add_conference">Add Conference</string>
+    <string name="all_fileds_are_required">All fileds are required!</string>
 </resources>

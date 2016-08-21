@@ -334,7 +334,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             Cursor emailCursor = dataProviderFunctions.checkForEmail(mEmail, getApplicationContext());
             User u = null;
             if (emailCursor != null && emailCursor.moveToFirst() && emailCursor.getCount() > 0) {
-                if(emailCursor!=null)emailCursor.close();
+                if (emailCursor != null) emailCursor.close();
                 u = dataProviderFunctions.userLogin(mEmail, mPassword, getApplicationContext());
             } else if (Signup) {
                 u = dataProviderFunctions.AddUser(mEmail, mPassword, String.valueOf(mUserType), getApplicationContext());
@@ -344,7 +344,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     }
                 });
             }
-            if(emailCursor!=null)emailCursor.close();
+            if (emailCursor != null) emailCursor.close();
             return u;
         }
 

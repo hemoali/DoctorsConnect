@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -46,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
      */
     private ViewPager mViewPager;
 
+    static FloatingActionButton fab;
+
     @Override
     protected void onCreate (Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,8 +57,7 @@ public class MainActivity extends AppCompatActivity {
         toolbar.setTitle(R.string.app_name);
 
         //Get user
-        Bundle bundle = getIntent().getExtras();
-        mUser = (User) bundle.getSerializable("user");
+        mUser = Utils.getUserDataFromSharedPreferences(getApplicationContext());
 
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
@@ -65,17 +65,36 @@ public class MainActivity extends AppCompatActivity {
 
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.container);
+        mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageSelected (int position) {
+                if (position == 0) {
+                    fab.setVisibility(View.VISIBLE);
+                } else {
+                    fab.setVisibility(View.INVISIBLE);
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged (int state) {
+            }
+
+            @Override
+            public void onPageScrolled (int position, float arg1, int arg2) {
+            }
+        });
         mViewPager.setAdapter(mSectionsPagerAdapter);
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick (View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                Intent i = new Intent(getApplicationContext(), AddConferenceActivity.class);
+                startActivity(i);
+                finish();
             }
         });
 
@@ -142,7 +161,10 @@ public class MainActivity extends AppCompatActivity {
             TextView noElementsView = (TextView) rootView.findViewById(R.id.no_elements_view);
 
             //Admin Case
-            if (getArguments().getInt(ARG_SECTION_NUMBER) == 0) {
+            if (getArguments().getInt(ARG_SECTION_NUMBER) == 1) {
+                //Show add button
+                fab.setVisibility(View.VISIBLE);
+
                 ConferenceAdapter conferenceAdapter = new ConferenceAdapter(getContext(), null, 0);
                 mainListView.setAdapter(conferenceAdapter);
                 Cursor c = DataProviderFunctions.getInstance().getConfs(getContext());
@@ -151,7 +173,10 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     conferenceAdapter.swapCursor(c);
                 }
-            } else {
+            } else if (getArguments().getInt(ARG_SECTION_NUMBER) == 2) {
+                //Hide add button
+                fab.setVisibility(View.INVISIBLE);
+
                 Cursor cursor = DataProviderFunctions.getInstance().getTopics(getContext());
                 if (cursor.getCount() > 0) {
                     cursor.moveToFirst();
