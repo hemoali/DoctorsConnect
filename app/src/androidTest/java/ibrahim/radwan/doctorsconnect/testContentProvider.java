@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.v4.content.CursorLoader;
 import android.test.AndroidTestCase;
+import android.util.Log;
 
 import ibrahim.radwan.doctorsconnect.data.Contract;
 import ibrahim.radwan.doctorsconnect.data.Database;
@@ -89,12 +90,13 @@ public class TestContentProvider extends AndroidTestCase {
         assertTrue("Error, cannot insert conf!!!", ContentUris.parseId(uri) != -1);
     }
 
-    private void AddTopic (String doc_id, String title) {
+    private long AddTopic (String doc_id, String title) {
         ContentValues values = new ContentValues();
         values.put(Contract.TopicEntry.COLUMN_DOC_ID, doc_id);
         values.put(Contract.TopicEntry.COLUMN_TOPIC_TITLE, title);
         Uri uri = mContext.getContentResolver().insert(Contract.TopicEntry.CONTENT_URI_ADD_TOPIC, values);
         assertTrue("Error, cannot insert topic!!!", ContentUris.parseId(uri) != -1);
+        return ContentUris.parseId(uri);
     }
 
     private void getUsers () {
@@ -161,7 +163,20 @@ public class TestContentProvider extends AndroidTestCase {
     private void deleteConf (String id) {
         mContext.getContentResolver().delete(Contract.ConfsEntry.CONTENT_URI_DELETE_CONF.buildUpon().appendPath(id).build(), null, null);
     }
-
+    private void getTopicByID(String id){
+        CursorLoader cursorLoader = new CursorLoader(mContext, Contract.TopicEntry.CONTENT_URI_GET_TOPIC_BY_ID.buildUpon().appendPath(id).build(),
+                null, null, null, null);
+        Cursor c = cursorLoader.loadInBackground();
+        assertFalse("Error: cannot load topic by id", c.getCount() == 0);
+        c.close();
+    }
+    private void getUserByID(String id){
+        CursorLoader cursorLoader = new CursorLoader(mContext, Contract.UserEntry.CONTENT_URI_GET_USER.buildUpon().appendPath(id).build(),
+                null, null, null, null);
+        Cursor c = cursorLoader.loadInBackground();
+        assertFalse("Error: cannot load user by id" + c.getCount(), c.getCount() == 0);
+        c.close();
+    }
     public void testProvider () {
 
         Database database = new Database(
@@ -174,10 +189,11 @@ public class TestContentProvider extends AndroidTestCase {
         AddUser("ex@ex.com", "exexex", "1");
         AddUser("exADMIN@ex.com", "exexex", "2");
         AddUser("ex@exx.com", "exexex", "1");
-
+        getUserByID("1");
         checkEmail("exADMIN@ex.com");
 
-        AddTopic("1", "aasd");
+        Log.v("TAG", AddTopic("1", "aasd")+"");
+        getTopicByID("1");
 
         //Test confs actions
         AddConf("asd", "!23", "1");
@@ -215,6 +231,11 @@ public class TestContentProvider extends AndroidTestCase {
         getTopics();
         database.close();
         db.close();
+    }
+    @Override
+    protected void tearDown () throws Exception {
+        super.tearDown();
+        mContext.deleteDatabase(Contract.DATABASE_NAME);
     }
 
 

@@ -1,6 +1,7 @@
 package ibrahim.radwan.doctorsconnect;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -8,7 +9,10 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
@@ -16,11 +20,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import ibrahim.radwan.doctorsconnect.Models.User;
+import ibrahim.radwan.doctorsconnect.Utils.ConferenceAdapter;
 import ibrahim.radwan.doctorsconnect.Utils.Utils;
 import ibrahim.radwan.doctorsconnect.data.Contract;
+import ibrahim.radwan.doctorsconnect.data.DataProviderFunctions;
 
 public class MainActivity extends AppCompatActivity {
     private User mUser;
@@ -104,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * A placeholder fragment containing a simple view.
      */
-    public static class PlaceholderFragment extends Fragment {
+    public static class PlaceholderFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
         /**
          * The fragment argument representing the section number for this
          * fragment.
@@ -130,9 +137,48 @@ public class MainActivity extends AppCompatActivity {
         public View onCreateView (LayoutInflater inflater, ViewGroup container,
                                   Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-            textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
+
+            ListView mainListView = (ListView) rootView.findViewById(R.id.main_list_view);
+            TextView noElementsView = (TextView) rootView.findViewById(R.id.no_elements_view);
+
+            //Admin Case
+            if (getArguments().getInt(ARG_SECTION_NUMBER) == 0) {
+                ConferenceAdapter conferenceAdapter = new ConferenceAdapter(getContext(), null, 0);
+                mainListView.setAdapter(conferenceAdapter);
+                Cursor c = DataProviderFunctions.getInstance().getConfs(getContext());
+                if (c.getCount() == 0) {
+                    mainListView.setVisibility(View.GONE);
+                } else {
+                    conferenceAdapter.swapCursor(c);
+                }
+            } else {
+                Cursor cursor = DataProviderFunctions.getInstance().getTopics(getContext());
+                if (cursor.getCount() > 0) {
+                    cursor.moveToFirst();
+                    User u = DataProviderFunctions.getInstance().getUserByID(cursor.getString(cursor.getColumnIndex(Contract.TopicEntry.COLUMN_DOC_ID)), getContext());
+                    SimpleCursorAdapter c = new SimpleCursorAdapter(getContext(), android.R.layout.simple_list_item_2, cursor, new String[]{Contract.TopicEntry.COLUMN_TOPIC_TITLE, u.getUserEmail()}, new int[]{android.R.id.text1, android.R.id.text2}, 0);
+                    mainListView.setAdapter(c);
+                } else {
+                    mainListView.setVisibility(View.GONE);
+                }
+            }
             return rootView;
+        }
+
+        @Override
+        public Loader<Cursor> onCreateLoader (int id, Bundle args) {
+
+            return null;
+        }
+
+        @Override
+        public void onLoadFinished (Loader<Cursor> loader, Cursor data) {
+
+        }
+
+        @Override
+        public void onLoaderReset (Loader<Cursor> loader) {
+
         }
     }
 

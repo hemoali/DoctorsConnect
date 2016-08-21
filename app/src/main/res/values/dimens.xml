@@ -6,4 +6,7 @@
     <dimen name="appbar_padding_top">8dp</dimen>
     <dimen name="sign_up_margin_top">10dp</dimen>
     <dimen name="activity_login_padding">50dp</dimen>
+    <dimen name="large_text_size">22sp</dimen>
+    <dimen name="normal_font_size">18sp</dimen>
+    <dimen name="small_font_size">16sp</dimen>
 </resources>

@@ -6,14 +6,16 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.v4.content.CursorLoader;
+import android.util.Log;
 
 import ibrahim.radwan.doctorsconnect.Models.User;
+import ibrahim.radwan.doctorsconnect.Utils.Topic;
 
 /**
  * Created by ibrahimradwan on 8/21/16.
  */
 public class DataProviderFunctions {
-    public static DataProviderFunctions dataProviderFunctions = null;
+    private static DataProviderFunctions dataProviderFunctions = null;
 
     private DataProviderFunctions () {
     }
@@ -61,4 +63,49 @@ public class DataProviderFunctions {
                 null, null, new String[]{email}, null);
         return cursorLoader.loadInBackground();
     }
+
+    public User getUserByID (String id, Context context) {
+        CursorLoader cursorLoader = new CursorLoader(context, Contract.UserEntry.CONTENT_URI_GET_USER.buildUpon().appendPath(id).build(),
+                null, null, null, null);
+        Cursor c = cursorLoader.loadInBackground();
+        c.moveToFirst();
+        User u = new User(id,
+                c.getString(c.getColumnIndex(Contract.UserEntry.COLUMN_USER_EMAIL)),
+                null,
+                c.getString(c.getColumnIndex(Contract.UserEntry.COLUMN_USER_TYPE)));
+        c.close();
+        return u;
+    }
+
+    public Cursor getTopics (Context context) {
+        CursorLoader cursorLoader = new CursorLoader(context, Contract.TopicEntry.CONTENT_URI_GET_TOPICS,
+                null, null, null, null);
+        Cursor c = cursorLoader.loadInBackground();
+        return c;
+    }
+
+    public Topic getTopicByID (String id, Context context) {
+        CursorLoader cursorLoader = new CursorLoader(context, Contract.TopicEntry.CONTENT_URI_GET_TOPIC_BY_ID.buildUpon().appendPath(id).build(),
+                null, null, null, null);
+        Cursor c = cursorLoader.loadInBackground();
+        c.moveToFirst();
+        Topic t = null;
+        if (c.getCount() > 0) {
+            t = new Topic(c.getString(c.getColumnIndex(Contract.TopicEntry.COLUMN_TOPIC_ID)),
+                    c.getString(c.getColumnIndex(Contract.TopicEntry.COLUMN_DOC_ID)),
+                    c.getString(c.getColumnIndex(Contract.TopicEntry.COLUMN_TOPIC_TITLE)));
+        }
+        c.close();
+        return t;
+    }
+
+    public Cursor getConfs (Context context) {
+        CursorLoader cursorLoader = new CursorLoader(context, Contract.ConfsEntry.CONTENT_URI_GET_CONFS,
+                null, null, null, null);
+        Cursor c = cursorLoader.loadInBackground();
+        c.moveToFirst();
+        Log.e("TAGS", "" + c.getCount());
+        return c;
+    }
+
 }

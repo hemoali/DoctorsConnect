@@ -73,7 +73,7 @@ public class Contract {
 
         public static final String TABLE_INVITES = "invites";
 
-        public static final String COLUMN_INVITE_ID = "invite_id";
+        public static final String COLUMN_INVITE_ID = "_id";
         public static final String COLUMN_CONF_ID = "conf_id";
         public static final String COLUMN_ADMIN_ID = "admin_id";
         public static final String COLUMN_DOC_ID = "doc_id";
@@ -82,7 +82,7 @@ public class Contract {
 
     public static final class InviteStatusEntry {
         public static final String TABLE_INVITE_STATUS = "invite_status";
-        public static final String COLUMN_STATUS_ID = "status_id";
+        public static final String COLUMN_STATUS_ID = "_id";
         public static final String COLUMN_STATUS_NAME = "status_name";
 
 
@@ -111,7 +111,7 @@ public class Contract {
                 BASE_CONTENT_URI.buildUpon().appendPath(PATH_CONFS).appendPath(PATH_DELETE_CONF).build();
 
         public static final String TABLE_CONFS = "confs";
-        public static final String COLUMN_CONF_ID = "conf_id";
+        public static final String COLUMN_CONF_ID = "_id";
         public static final String COLUMN_CONF_NAME = "conf_name";
         public static final String COLUMN_CONF_DATETIME = "conf_datetime";
         public static final String COLUMN_TOPIC_ID = "topic_id";
@@ -129,8 +129,11 @@ public class Contract {
         public static final Uri CONTENT_URI_ADD_TOPIC =
                 BASE_CONTENT_URI.buildUpon().appendPath(PATH_TOPICS).appendPath(PATH_ADD_TOPIC).build();
 
+        public static final Uri CONTENT_URI_GET_TOPIC_BY_ID =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_TOPICS).build();
+
         public static final String TABLE_TOPICS = "topics";
-        public static final String COLUMN_TOPIC_ID = "topic_id";
+        public static final String COLUMN_TOPIC_ID = "_id";
         public static final String COLUMN_DOC_ID = "doc_id";
         public static final String COLUMN_TOPIC_TITLE = "topic_title";
     }

@@ -8,6 +8,7 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 /**
  * Created by ibrahimradwan on 8/20/16.
@@ -19,6 +20,7 @@ public class DataProvider extends ContentProvider {
     static final int LOGIN_USER = 101;
     static final int GET_USERS = 102;
     static final int CHECK_EMAIL = 103;
+    static final int GET_USER_BY_ID = 104;
 
     static final int ADD_INVITE = 200;
     static final int GET_INVITES = 201;
@@ -32,6 +34,7 @@ public class DataProvider extends ContentProvider {
 
     static final int ADD_TOPIC = 400;
     static final int GET_TOPICS = 401;
+    static final int GET_TOPIC_BY_ID = 402;
 
     private Database database;
 
@@ -42,6 +45,7 @@ public class DataProvider extends ContentProvider {
         matcher.addURI(authority, Contract.PATH_USERS + "/" + Contract.UserEntry.PATH_USERS_SIGNUP, ADD_USER);
         matcher.addURI(authority, Contract.PATH_USERS + "/" + Contract.UserEntry.PATH_USERS_LOGIN, LOGIN_USER);
         matcher.addURI(authority, Contract.PATH_USERS, GET_USERS);
+        matcher.addURI(authority, Contract.PATH_USERS + "/#", GET_USER_BY_ID);
         matcher.addURI(authority, Contract.PATH_USERS + "/" + Contract.UserEntry.PATH_USERS_EMAIL_CHECK, CHECK_EMAIL);
 
         matcher.addURI(authority, Contract.PATH_INVITES + "/" + Contract.InvitesEntry.PATH_GET_INVITES + "/#", GET_INVITES);
@@ -56,6 +60,7 @@ public class DataProvider extends ContentProvider {
 
         matcher.addURI(authority, Contract.PATH_TOPICS + "/" + Contract.TopicEntry.PATH_ADD_TOPIC, ADD_TOPIC);
         matcher.addURI(authority, Contract.PATH_TOPICS + "/" + Contract.TopicEntry.PATH_GET_TOPICS, GET_TOPICS);
+        matcher.addURI(authority, Contract.PATH_TOPICS + "/#", GET_TOPIC_BY_ID);
 
         return matcher;
     }
@@ -70,6 +75,7 @@ public class DataProvider extends ContentProvider {
     @Nullable
     @Override
     public Cursor query (Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+Log.e("TAG", "" + uriMatcher.match(uri) );
         if (uriMatcher.match(uri) == GET_USERS) {
             return database.fetchDoctors();
         } else if (uriMatcher.match(uri) == LOGIN_USER) {
@@ -79,6 +85,8 @@ public class DataProvider extends ContentProvider {
             return database.userLogin(values);
         } else if (uriMatcher.match(uri) == CHECK_EMAIL) {
             return database.checkEmail(selectionArgs[0]);
+        } else if (uriMatcher.match(uri) == GET_USER_BY_ID) {
+            return database.getUserByID(uri.getPathSegments().get(1));
         } else if (uriMatcher.match(uri) == GET_INVITES) {
             ContentValues values = new ContentValues();
             values.put(Contract.InvitesEntry.COLUMN_DOC_ID, uri.getPathSegments().get(2));
@@ -87,6 +95,8 @@ public class DataProvider extends ContentProvider {
             return database.fetchConfs();
         } else if (uriMatcher.match(uri) == GET_TOPICS) {
             return database.fetchTopics();
+        } else if (uriMatcher.match(uri) == GET_TOPIC_BY_ID) {
+            return database.getTopicByID(uri.getPathSegments().get(1));
         }
         return null;
     }

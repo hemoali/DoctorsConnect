@@ -213,6 +213,26 @@ public class Database extends SQLiteOpenHelper {
     }
 
     /**
+     * returns user by id
+     *
+     * @param userID
+     * @return
+     */
+    public Cursor getUserByID (String userID) {
+        SQLiteQueryBuilder sqliteQueryBuilder = new SQLiteQueryBuilder();
+        sqliteQueryBuilder.setTables(Contract.UserEntry.TABLE_USERS);
+        Cursor cursor = sqliteQueryBuilder.query(getReadableDatabase(),
+                null,
+                Contract.UserEntry.COLUMN_USER_ID + " = ?",
+                new String[]{userID},
+                null,
+                null,
+                "");
+        cursor.moveToFirst();
+        return cursor;
+    }
+
+    /**
      * @param values (doctor_id, title)
      * @return topic_id
      * @throws Throwable
@@ -238,6 +258,22 @@ public class Database extends SQLiteOpenHelper {
                 null,
                 null,
                 null,
+                null,
+                null,
+                "");
+        return cursor;
+    }
+
+    /**
+     * @return All topics
+     */
+    public Cursor getTopicByID (String id) {
+        SQLiteQueryBuilder sqliteQueryBuilder = new SQLiteQueryBuilder();
+        sqliteQueryBuilder.setTables(Contract.TopicEntry.TABLE_TOPICS);
+        Cursor cursor = sqliteQueryBuilder.query(getReadableDatabase(),
+                null,
+                Contract.TopicEntry.COLUMN_TOPIC_ID + " = ?",
+                new String[]{id},
                 null,
                 null,
                 "");
@@ -361,4 +397,5 @@ public class Database extends SQLiteOpenHelper {
                 "");
         return cursor;
     }
+
 }
