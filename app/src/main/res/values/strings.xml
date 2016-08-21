@@ -39,5 +39,5 @@
     <string name="send_invites">Send Invite</string>
     <string name="edit_conference">Edit Conference</string>
     <string name="conference_updated">Conference updated successfully</string>
-    <string name="intive_sent">Invite sent</string>
+    <string name="invite_sent">Invite sent</string>
 </resources>

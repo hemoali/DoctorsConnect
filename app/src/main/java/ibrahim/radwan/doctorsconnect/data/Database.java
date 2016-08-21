@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
@@ -260,7 +261,7 @@ public class Database extends SQLiteOpenHelper {
                 null,
                 null,
                 null,
-                Contract.TopicEntry.COLUMN_TOPIC_ID+ " DESC");
+                Contract.TopicEntry.COLUMN_TOPIC_ID + " DESC");
         return cursor;
     }
 
@@ -305,7 +306,7 @@ public class Database extends SQLiteOpenHelper {
                 null,
                 null,
                 null,
-                Contract.ConfsEntry.COLUMN_CONF_ID+ " DESC");
+                Contract.ConfsEntry.COLUMN_CONF_ID + " DESC");
         return cursor;
     }
 
@@ -330,10 +331,16 @@ public class Database extends SQLiteOpenHelper {
      * @return true if deleted
      */
     public boolean deleteConf (String id) {
+        boolean deleted = false;
         if (id != null) {
-            return (getWritableDatabase().delete(Contract.ConfsEntry.TABLE_CONFS, Contract.ConfsEntry.COLUMN_CONF_ID + "=?", new String[]{id}) == 1);
+            //First delete invites
+            deleteInvitesByConfID(id);
+            try {
+                deleted = (getWritableDatabase().delete(Contract.ConfsEntry.TABLE_CONFS, Contract.ConfsEntry.COLUMN_CONF_ID + "=?", new String[]{id}) == 1);
+            } catch (SQLiteConstraintException e) {
+            }
         }
-        return false;
+        return deleted;
     }
 
     /**
@@ -398,4 +405,20 @@ public class Database extends SQLiteOpenHelper {
         return cursor;
     }
 
+    /**
+     * Deletes all invites that are connected to conference (in order to delete this conference)
+     *
+     * @param conf_id: conference id
+     * @return true if deleted
+     */
+    public boolean deleteInvitesByConfID (String conf_id) {
+        boolean deleted = false;
+        if (conf_id != null) {
+            try {
+                deleted = (getWritableDatabase().delete(Contract.InvitesEntry.TABLE_INVITES, Contract.InvitesEntry.COLUMN_CONF_ID + "=?", new String[]{conf_id}) > 0);
+            } catch (SQLiteConstraintException e) {
+            }
+        }
+        return deleted;
+    }
 }

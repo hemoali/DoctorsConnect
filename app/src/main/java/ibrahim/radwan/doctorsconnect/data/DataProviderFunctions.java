@@ -8,7 +8,7 @@ import android.net.Uri;
 import android.support.v4.content.CursorLoader;
 
 import ibrahim.radwan.doctorsconnect.Models.User;
-import ibrahim.radwan.doctorsconnect.Utils.Topic;
+import ibrahim.radwan.doctorsconnect.Models.Topic;
 
 /**
  * Created by ibrahimradwan on 8/21/16.
@@ -136,8 +136,11 @@ public class DataProviderFunctions {
         return ContentUris.parseId(uri);
     }
 
-    public void deleteConf (String id, Context context) {
-        context.getContentResolver().delete(Contract.ConfsEntry.CONTENT_URI_DELETE_CONF.buildUpon().appendPath(id).build(), null, null);
+    public boolean deleteConf (String id, Context context) {
+        if (context.getContentResolver().delete(Contract.ConfsEntry.CONTENT_URI_DELETE_CONF.buildUpon().appendPath(id).build(), null, null) == 1) {
+            return true;
+        }
+        return false;
     }
 
     public boolean UpdateConf (String conf_id, String name, String time, String topic_id, Context context) {

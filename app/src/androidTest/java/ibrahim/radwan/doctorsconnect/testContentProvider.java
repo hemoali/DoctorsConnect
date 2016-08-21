@@ -163,20 +163,23 @@ public class TestContentProvider extends AndroidTestCase {
     private void deleteConf (String id) {
         mContext.getContentResolver().delete(Contract.ConfsEntry.CONTENT_URI_DELETE_CONF.buildUpon().appendPath(id).build(), null, null);
     }
-    private void getTopicByID(String id){
+
+    private void getTopicByID (String id) {
         CursorLoader cursorLoader = new CursorLoader(mContext, Contract.TopicEntry.CONTENT_URI_GET_TOPIC_BY_ID.buildUpon().appendPath(id).build(),
                 null, null, null, null);
         Cursor c = cursorLoader.loadInBackground();
         assertFalse("Error: cannot load topic by id", c.getCount() == 0);
         c.close();
     }
-    private void getUserByID(String id){
+
+    private void getUserByID (String id) {
         CursorLoader cursorLoader = new CursorLoader(mContext, Contract.UserEntry.CONTENT_URI_GET_USER.buildUpon().appendPath(id).build(),
                 null, null, null, null);
         Cursor c = cursorLoader.loadInBackground();
         assertFalse("Error: cannot load user by id" + c.getCount(), c.getCount() == 0);
         c.close();
     }
+
     public void testProvider () {
 
         Database database = new Database(
@@ -192,7 +195,7 @@ public class TestContentProvider extends AndroidTestCase {
         getUserByID("1");
         checkEmail("exADMIN@ex.com");
 
-        Log.v("TAG", AddTopic("1", "aasd")+"");
+        Log.v("TAG", AddTopic("1", "aasd") + "");
         getTopicByID("1");
 
         //Test confs actions
@@ -232,6 +235,7 @@ public class TestContentProvider extends AndroidTestCase {
         database.close();
         db.close();
     }
+
     @Override
     protected void tearDown () throws Exception {
         super.tearDown();

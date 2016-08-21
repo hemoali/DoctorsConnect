@@ -1,4 +1,4 @@
-package ibrahim.radwan.doctorsconnect.Utils;
+package ibrahim.radwan.doctorsconnect.Models;
 
 /**
  * Created by ibrahimradwan on 8/21/16.

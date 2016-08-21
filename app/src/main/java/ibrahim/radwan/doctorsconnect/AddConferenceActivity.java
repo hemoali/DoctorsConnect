@@ -23,31 +23,35 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-import ibrahim.radwan.doctorsconnect.Utils.Topic;
-import ibrahim.radwan.doctorsconnect.Utils.TopicsSpinnerAdapter;
+import ibrahim.radwan.doctorsconnect.Models.Topic;
+import ibrahim.radwan.doctorsconnect.adapters.TopicsSpinnerAdapter;
 import ibrahim.radwan.doctorsconnect.data.Contract;
 import ibrahim.radwan.doctorsconnect.data.DataProviderFunctions;
 
-public class AddConferenceActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
+public class AddConferenceActivity extends AppCompatActivity {
+    //Topic connected to conf
     String topic_id = null;
+
+    //Pickers
     private DatePickerDialog datePickerDialog;
     private TimePickerDialog timePickerDialog;
+
+    //date formatter
     private SimpleDateFormat dateFormatter;
+
+    // All topics holder (To display)
     private List<Topic> topics = new ArrayList<>();
 
-    @Override
-    public void onItemSelected (AdapterView<?> adapterView, View view, int i, long l) {
-
-    }
-
-    @Override
-    public void onNothingSelected (AdapterView<?> adapterView) {
-
-    }
+    //Views
+    EditText confNameEditText, confDateTimeEditText;
+    Spinner topicSpinner;
+    TextView noTopicsTV;
+    Button addConf;
 
     @Override
     protected void onCreate (Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         // Setup Toolbar
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setLogo(R.mipmap.ic_launcher);
@@ -57,12 +61,10 @@ public class AddConferenceActivity extends AppCompatActivity implements AdapterV
 
         setContentView(R.layout.activity_add_conference);
 
-        final EditText confNameEditText = (EditText) findViewById(R.id.conf_name_edittext);
-        Spinner topicSpinner = (Spinner) findViewById(R.id.topic_spinner);
-        TextView noTopicsTV = (TextView) findViewById(R.id.no_topics_view);
-        Button addConf = (Button) findViewById(R.id.add_conference_button);
 
-        final EditText confDateTimeEditText = (EditText) findViewById(R.id.conf_datetime_editText);
+        defineViews();
+
+        //setup date time edit text to not accept input and to show the pickers when clicked
         confDateTimeEditText.setKeyListener(null); // disable datetime field
         confDateTimeEditText.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -71,35 +73,8 @@ public class AddConferenceActivity extends AppCompatActivity implements AdapterV
             }
         });
 
+        setupTopicsSpinner();
         //setup topics spinner
-        topicSpinner.setOnItemSelectedListener(this);
-        Cursor topicsCursor = DataProviderFunctions.getInstance().getTopics(getApplicationContext());
-        if (topicsCursor != null && topicsCursor.getCount() > 0) {
-            topicsCursor.moveToFirst();
-            do {
-                topics.add(
-                        new Topic(topicsCursor.getString(topicsCursor.getColumnIndex(Contract.TopicEntry.COLUMN_TOPIC_ID)),
-                                topicsCursor.getString(topicsCursor.getColumnIndex(Contract.TopicEntry.COLUMN_DOC_ID)),
-                                topicsCursor.getString(topicsCursor.getColumnIndex(Contract.TopicEntry.COLUMN_TOPIC_TITLE))));
-            } while (topicsCursor.moveToNext());
-            final TopicsSpinnerAdapter dataAdapter = new TopicsSpinnerAdapter(getBaseContext(), android.R.layout.simple_spinner_item, topics);
-            dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            topicSpinner.setAdapter(dataAdapter);
-            topicSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected (AdapterView<?> adapterView, View view, int i, long l) {
-                    topic_id = dataAdapter.getItem(i).getId();
-                }
-
-                @Override
-                public void onNothingSelected (AdapterView<?> adapterView) {
-
-                }
-            });
-        } else {
-            noTopicsTV.setVisibility(View.VISIBLE);
-            topicSpinner.setVisibility(View.GONE);
-        }
 
         // Setup date picker
         dateFormatter = new SimpleDateFormat("MMM, dd yyyy  k:m", Locale.US);
@@ -163,6 +138,58 @@ public class AddConferenceActivity extends AppCompatActivity implements AdapterV
             }
         });
 
+    }
+
+    /**
+     * Sets up the topics spinner so the admin can pick the topic title from the list
+     */
+    private void setupTopicsSpinner () {
+        // Get the topics
+        Cursor topicsCursor = DataProviderFunctions.getInstance().getTopics(getApplicationContext());
+
+        if (topicsCursor != null && topicsCursor.getCount() > 0) {
+
+            topicsCursor.moveToFirst();
+            /* Fill topics to the @topics list */
+            do {
+                topics.add(
+                        new Topic(topicsCursor.getString(topicsCursor.getColumnIndex(Contract.TopicEntry.COLUMN_TOPIC_ID)),
+                                topicsCursor.getString(topicsCursor.getColumnIndex(Contract.TopicEntry.COLUMN_DOC_ID)),
+                                topicsCursor.getString(topicsCursor.getColumnIndex(Contract.TopicEntry.COLUMN_TOPIC_TITLE))));
+            } while (topicsCursor.moveToNext());
+            /* Define the adapter with the @topics list */
+            final TopicsSpinnerAdapter dataAdapter = new TopicsSpinnerAdapter(getBaseContext(), android.R.layout.simple_spinner_item, topics);
+            dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            topicSpinner.setAdapter(dataAdapter);
+
+            //Change the topic_id when the admin clicks the wanted topic
+            topicSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected (AdapterView<?> adapterView, View view, int i, long l) {
+                    topic_id = dataAdapter.getItem(i).getId();
+                }
+
+                @Override
+                public void onNothingSelected (AdapterView<?> adapterView) {
+
+                }
+            });
+        } else {//if courser empty: hide the spinner and show 'no topics' tv
+            noTopicsTV.setVisibility(View.VISIBLE);
+            topicSpinner.setVisibility(View.GONE);
+        }
+
+    }
+
+    /**
+     * Defines the activity views
+     */
+    public void defineViews () {
+        confNameEditText = (EditText) findViewById(R.id.conf_name_edittext);
+        confDateTimeEditText = (EditText) findViewById(R.id.conf_datetime_editText);
+        topicSpinner = (Spinner) findViewById(R.id.topic_spinner);
+        noTopicsTV = (TextView) findViewById(R.id.no_topics_view);
+        addConf = (Button) findViewById(R.id.add_conference_button);
     }
 
     @Override
