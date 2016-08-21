@@ -32,4 +32,12 @@
     <string name="conference_time">Conference Time</string>
     <string name="add_conference">Add Conference</string>
     <string name="all_fileds_are_required">All fileds are required!</string>
+    <string name="conference_added_successfully">Conference added successfully</string>
+    <string name="conference_menu">Conference Menu</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="send_invites">Send Invite</string>
+    <string name="edit_conference">Edit Conference</string>
+    <string name="conference_updated">Conference updated successfully</string>
+    <string name="intive_sent">Invite sent</string>
 </resources>

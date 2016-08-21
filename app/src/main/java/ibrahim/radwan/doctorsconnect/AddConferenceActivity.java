@@ -33,6 +33,7 @@ public class AddConferenceActivity extends AppCompatActivity implements AdapterV
     private DatePickerDialog datePickerDialog;
     private TimePickerDialog timePickerDialog;
     private SimpleDateFormat dateFormatter;
+    private List<Topic> topics = new ArrayList<>();
 
     @Override
     public void onItemSelected (AdapterView<?> adapterView, View view, int i, long l) {
@@ -74,20 +75,20 @@ public class AddConferenceActivity extends AppCompatActivity implements AdapterV
         topicSpinner.setOnItemSelectedListener(this);
         Cursor topicsCursor = DataProviderFunctions.getInstance().getTopics(getApplicationContext());
         if (topicsCursor != null && topicsCursor.getCount() > 0) {
-            List<Topic> topics = new ArrayList<>();
+            topicsCursor.moveToFirst();
             do {
                 topics.add(
                         new Topic(topicsCursor.getString(topicsCursor.getColumnIndex(Contract.TopicEntry.COLUMN_TOPIC_ID)),
                                 topicsCursor.getString(topicsCursor.getColumnIndex(Contract.TopicEntry.COLUMN_DOC_ID)),
                                 topicsCursor.getString(topicsCursor.getColumnIndex(Contract.TopicEntry.COLUMN_TOPIC_TITLE))));
             } while (topicsCursor.moveToNext());
-            final TopicsSpinnerAdapter dataAdapter = new TopicsSpinnerAdapter(getApplicationContext(), android.R.layout.simple_spinner_item, topics);
+            final TopicsSpinnerAdapter dataAdapter = new TopicsSpinnerAdapter(getBaseContext(), android.R.layout.simple_spinner_item, topics);
             dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             topicSpinner.setAdapter(dataAdapter);
             topicSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected (AdapterView<?> adapterView, View view, int i, long l) {
-                    topic_id = ((Topic) dataAdapter.getItem(i)).getId();
+                    topic_id = dataAdapter.getItem(i).getId();
                 }
 
                 @Override
@@ -124,7 +125,23 @@ public class AddConferenceActivity extends AppCompatActivity implements AdapterV
                 confDateTimeEditText.setText(dateFormatter.format(newDate.getTime()));
             }
         }, currentCalendar.get(Calendar.HOUR_OF_DAY), currentCalendar.get(Calendar.MINUTE), true);
-        // Adding topic button
+
+        //Check for intent extras (Edit conf)
+        if (getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_ID) != null) {
+            confNameEditText.setText(getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_NAME));
+            confDateTimeEditText.setText(getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_DATETIME));
+            Topic toBeSelected = null;
+            for (Topic t : topics) {
+                if (t.getId().equals(getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_TOPIC_ID)))
+                    toBeSelected = t;
+            }
+            topic_id = getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_TOPIC_ID);
+            topicSpinner.setSelection(topics.indexOf(toBeSelected));
+            addConf.setText(R.string.edit_conference);
+
+        }
+
+        // Adding/Editing topic button
         addConf.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick (View view) {
@@ -134,9 +151,18 @@ public class AddConferenceActivity extends AppCompatActivity implements AdapterV
                     Toast.makeText(getApplicationContext(), R.string.all_fileds_are_required, Toast.LENGTH_SHORT).show();
                     return;
                 }
-                DataProviderFunctions.getInstance().AddConf(confName, confDateTime, topic_id, getApplicationContext());
+                if (getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_ID) != null) {
+                    DataProviderFunctions.getInstance().UpdateConf(getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_ID), confName, confDateTime, topic_id, getBaseContext());
+                    Toast.makeText(getApplicationContext(), R.string.conference_updated, Toast.LENGTH_SHORT).show();
+                    onBackPressed();
+                } else {
+                    DataProviderFunctions.getInstance().AddConf(confName, confDateTime, topic_id, getApplicationContext());
+                    Toast.makeText(getApplicationContext(), R.string.conference_added_successfully, Toast.LENGTH_SHORT).show();
+                    onBackPressed();
+                }
             }
         });
+
     }
 
     @Override

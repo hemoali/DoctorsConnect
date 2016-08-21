@@ -1,5 +1,6 @@
 package ibrahim.radwan.doctorsconnect;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -8,44 +9,46 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SimpleCursorAdapter;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import ibrahim.radwan.doctorsconnect.Models.User;
+import ibrahim.radwan.doctorsconnect.Utils.Conference;
 import ibrahim.radwan.doctorsconnect.Utils.ConferenceAdapter;
 import ibrahim.radwan.doctorsconnect.Utils.Utils;
 import ibrahim.radwan.doctorsconnect.data.Contract;
 import ibrahim.radwan.doctorsconnect.data.DataProviderFunctions;
 
 public class MainActivity extends AppCompatActivity {
-    private User mUser;
-    /**
-     * The {@link android.support.v4.view.PagerAdapter} that will provide
-     * fragments for each of the sections. We use a
-     * {@link FragmentPagerAdapter} derivative, which will keep every
-     * loaded fragment in memory. If this becomes too memory intensive, it
-     * may be best to switch to a
-     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
-     */
+    static private User mUser;
+
     private SectionsPagerAdapter mSectionsPagerAdapter;
 
-    /**
-     * The {@link ViewPager} that will host the section contents.
-     */
     private ViewPager mViewPager;
 
     static FloatingActionButton fab;
+
+    static private List<Conference> allConferences = new ArrayList<>();
+
+    // Adapters
+    static private ConferenceAdapter mConferenceAdapter;
 
     @Override
     protected void onCreate (Bundle savedInstanceState) {
@@ -100,6 +103,76 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    public void onCreateContextMenu (ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+
+        menu.setHeaderTitle(R.string.conference_menu);
+        menu.add(0, v.getId(), 0, R.string.edit);
+        menu.add(0, v.getId(), 0, R.string.delete);
+        menu.add(0, v.getId(), 0, R.string.send_invites);
+    }
+
+    @Override
+    public boolean onContextItemSelected (MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        final int listPosition = info.position;
+        if (item.getTitle().toString().equals(getResources().getString(R.string.edit))) {
+            Intent i = new Intent(getBaseContext(), AddConferenceActivity.class);
+            i.putExtra(Contract.ConfsEntry.COLUMN_CONF_ID, allConferences.get(listPosition).getId());
+            i.putExtra(Contract.ConfsEntry.COLUMN_CONF_NAME, allConferences.get(listPosition).getName());
+            i.putExtra(Contract.ConfsEntry.COLUMN_TOPIC_ID, allConferences.get(listPosition).getTopic_id());
+            i.putExtra(Contract.ConfsEntry.COLUMN_CONF_DATETIME, allConferences.get(listPosition).getDatetime());
+            startActivity(i);
+            finish();
+        } else if (item.getTitle().toString().equals(getResources().getString(R.string.delete))) {
+            DataProviderFunctions.getInstance().deleteConf(allConferences.get(listPosition).getId(), getApplicationContext());
+            //Update list view
+            Cursor c = DataProviderFunctions.getInstance().getConfs(getApplicationContext());
+            mConferenceAdapter.swapCursor(c);
+            mConferenceAdapter.notifyDataSetChanged();
+        } else if (item.getTitle().toString().equals(getResources().getString(R.string.send_invites))) {
+//ToDo send invites :: Extract Doctors as list
+            final Cursor allDoctors = DataProviderFunctions.getInstance().getDoctors(getApplicationContext());
+
+            AlertDialog.Builder builderSingle = new AlertDialog.Builder(getApplicationContext());
+
+            final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
+                    getApplicationContext(),
+                    android.R.layout.select_dialog_singlechoice);
+            do {
+                arrayAdapter.add(allDoctors.getString(allDoctors.getColumnIndex(Contract.UserEntry.COLUMN_USER_EMAIL)));
+            } while (allDoctors.moveToNext());
+
+            builderSingle.setNegativeButton(
+                    "cancel",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick (DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+
+            builderSingle.setAdapter(
+                    arrayAdapter,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick (DialogInterface dialog, int which) {
+                            allDoctors.moveToPosition(which);
+                            if (DataProviderFunctions.getInstance().AddInvite(allDoctors.getString(allDoctors.getColumnIndex(Contract.UserEntry.COLUMN_USER_ID)),
+                                    Utils.getUserDataFromSharedPreferences(getApplicationContext()).getUserID(),
+                                    allConferences.get(listPosition).getId(),
+                                    getApplicationContext()) != -1) {
+                                Toast.makeText(getApplicationContext(), R.string.intive_sent, Toast.LENGTH_SHORT).show();
+                                dialog.dismiss();
+                            }
+                        }
+                    });
+            builderSingle.show();
+
+        }
+        return true;
+    }
 
     @Override
     public boolean onCreateOptionsMenu (Menu menu) {
@@ -130,22 +203,15 @@ public class MainActivity extends AppCompatActivity {
     /**
      * A placeholder fragment containing a simple view.
      */
-    public static class PlaceholderFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
+    public static class ListViewFragment extends Fragment {
+
         private static final String ARG_SECTION_NUMBER = "section_number";
 
-        public PlaceholderFragment () {
+        public ListViewFragment () {
         }
 
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        public static PlaceholderFragment newInstance (int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
+        public static ListViewFragment newInstance (int sectionNumber) {
+            ListViewFragment fragment = new ListViewFragment();
             Bundle args = new Bundle();
             args.putInt(ARG_SECTION_NUMBER, sectionNumber);
             fragment.setArguments(args);
@@ -159,51 +225,65 @@ public class MainActivity extends AppCompatActivity {
 
             ListView mainListView = (ListView) rootView.findViewById(R.id.main_list_view);
             TextView noElementsView = (TextView) rootView.findViewById(R.id.no_elements_view);
-
             //Admin Case
-            if (getArguments().getInt(ARG_SECTION_NUMBER) == 1) {
-                //Show add button
-                fab.setVisibility(View.VISIBLE);
+            if (mUser.getTypeID().equals(Contract.UserTypeEntry.USER_TYPE_ADMIN_ID)) {
+                if (getArguments().getInt(ARG_SECTION_NUMBER) == 1) { // confs
+                    //Show add button
+                    fab.setVisibility(View.VISIBLE);
+                    mConferenceAdapter = new ConferenceAdapter(getContext(), null, 0);
+                    Cursor c = DataProviderFunctions.getInstance().getConfs(getContext());
+                    mainListView.setAdapter(mConferenceAdapter);
+                    if (c.getCount() == 0) {
+                        mainListView.setVisibility(View.GONE);
+                        noElementsView.setVisibility(View.VISIBLE);
+                    } else {
+                        mConferenceAdapter.swapCursor(c);
+                        c.moveToFirst();
+                        do {
+                            allConferences.add(new Conference(c.getString(c.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_ID)),
+                                    c.getString(c.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_NAME)),
+                                    c.getString(c.getColumnIndex(Contract.ConfsEntry.COLUMN_TOPIC_ID)),
+                                    c.getString(c.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_DATETIME))));
+                        } while (c.moveToNext());
+                    }
+                    registerForContextMenu(mainListView);
+                    //to open the context menu on one click
+                    mainListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        @Override
+                        public void onItemClick (AdapterView<?> adapterView, View view, int i, long l) {
+                            getActivity().openContextMenu(view);
+                        }
+                    });
+                } else if (getArguments().getInt(ARG_SECTION_NUMBER) == 2) { // topics
 
-                ConferenceAdapter conferenceAdapter = new ConferenceAdapter(getContext(), null, 0);
-                mainListView.setAdapter(conferenceAdapter);
-                Cursor c = DataProviderFunctions.getInstance().getConfs(getContext());
-                if (c.getCount() == 0) {
-                    mainListView.setVisibility(View.GONE);
-                } else {
-                    conferenceAdapter.swapCursor(c);
-                }
-            } else if (getArguments().getInt(ARG_SECTION_NUMBER) == 2) {
-                //Hide add button
-                fab.setVisibility(View.INVISIBLE);
+                    //Hide add button
+                    fab.setVisibility(View.INVISIBLE);
 
-                Cursor cursor = DataProviderFunctions.getInstance().getTopics(getContext());
-                if (cursor.getCount() > 0) {
-                    cursor.moveToFirst();
-                    User u = DataProviderFunctions.getInstance().getUserByID(cursor.getString(cursor.getColumnIndex(Contract.TopicEntry.COLUMN_DOC_ID)), getContext());
-                    SimpleCursorAdapter c = new SimpleCursorAdapter(getContext(), android.R.layout.simple_list_item_2, cursor, new String[]{Contract.TopicEntry.COLUMN_TOPIC_TITLE, u.getUserEmail()}, new int[]{android.R.id.text1, android.R.id.text2}, 0);
-                    mainListView.setAdapter(c);
-                } else {
-                    mainListView.setVisibility(View.GONE);
+                    Cursor cursor = DataProviderFunctions.getInstance().getTopics(getContext());
+                    if (cursor.getCount() > 0) {
+                        cursor.moveToFirst();
+                        User u = DataProviderFunctions.getInstance().getUserByID(cursor.getString(cursor.getColumnIndex(Contract.TopicEntry.COLUMN_DOC_ID)), getContext());
+                        SimpleCursorAdapter c = new SimpleCursorAdapter(getContext(), android.R.layout.simple_list_item_2, cursor, new String[]{Contract.TopicEntry.COLUMN_TOPIC_TITLE, Contract.TopicEntry.COLUMN_DOC_ID}, new int[]{android.R.id.text1, android.R.id.text2}, 0);
+                        c.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
+                            @Override
+                            public boolean setViewValue (View view, Cursor cursor, int columnIndex) {
+                                if (view.getId() == android.R.id.text2) {
+                                    ((TextView) view).setText((DataProviderFunctions.getInstance().getUserByID(cursor.getString(cursor.getColumnIndex(Contract.TopicEntry.COLUMN_DOC_ID)), getContext())).getUserEmail());
+                                    return true;
+                                } else if (view.getId() == android.R.id.text1) {
+                                    ((TextView) view).setTextSize(22);
+                                }
+                                return false;
+                            }
+                        });
+                        mainListView.setAdapter(c);
+                    } else {
+                        mainListView.setVisibility(View.GONE);
+                        noElementsView.setVisibility(View.VISIBLE);
+                    }
                 }
             }
             return rootView;
-        }
-
-        @Override
-        public Loader<Cursor> onCreateLoader (int id, Bundle args) {
-
-            return null;
-        }
-
-        @Override
-        public void onLoadFinished (Loader<Cursor> loader, Cursor data) {
-
-        }
-
-        @Override
-        public void onLoaderReset (Loader<Cursor> loader) {
-
         }
     }
 
@@ -219,14 +299,11 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public Fragment getItem (int position) {
-            // getItem is called to instantiate the fragment for the given page.
-            // Return a PlaceholderFragment (defined as a static inner class below).
-            return PlaceholderFragment.newInstance(position + 1);
+            return ListViewFragment.newInstance(position + 1);
         }
 
         @Override
         public int getCount () {
-            // Show 3 total pages.
             return 2;
         }
 

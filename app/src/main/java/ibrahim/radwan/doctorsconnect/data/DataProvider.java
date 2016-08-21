@@ -8,7 +8,6 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 /**
  * Created by ibrahimradwan on 8/20/16.
@@ -75,7 +74,6 @@ public class DataProvider extends ContentProvider {
     @Nullable
     @Override
     public Cursor query (Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-Log.e("TAG", "" + uriMatcher.match(uri) );
         if (uriMatcher.match(uri) == GET_USERS) {
             return database.fetchDoctors();
         } else if (uriMatcher.match(uri) == LOGIN_USER) {

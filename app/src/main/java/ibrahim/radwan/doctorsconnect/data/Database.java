@@ -260,7 +260,7 @@ public class Database extends SQLiteOpenHelper {
                 null,
                 null,
                 null,
-                "");
+                Contract.TopicEntry.COLUMN_TOPIC_ID+ " DESC");
         return cursor;
     }
 
@@ -305,7 +305,7 @@ public class Database extends SQLiteOpenHelper {
                 null,
                 null,
                 null,
-                "");
+                Contract.ConfsEntry.COLUMN_CONF_ID+ " DESC");
         return cursor;
     }
 
@@ -394,7 +394,7 @@ public class Database extends SQLiteOpenHelper {
                 new String[]{values.getAsString(Contract.InvitesEntry.COLUMN_DOC_ID)},
                 null,
                 null,
-                "");
+                Contract.InvitesEntry.COLUMN_INVITE_ID + " DESC");
         return cursor;
     }
 

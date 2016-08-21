@@ -6,6 +6,11 @@ package ibrahim.radwan.doctorsconnect.Utils;
 public class Topic {
     String id, doc_id, title;
 
+    @Override
+    public String toString () {
+        return getTitle();
+    }
+
     public Topic (String id, String doc_id, String title) {
         this.id = id;
         this.doc_id = doc_id;

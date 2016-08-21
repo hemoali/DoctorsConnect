@@ -76,11 +76,23 @@ public class DataProviderFunctions {
         return u;
     }
 
+    public Cursor getDoctors (Context context) {
+        CursorLoader cursorLoader = new CursorLoader(context, Contract.UserEntry.CONTENT_URI_GET_USER,
+                null, null, null, null);
+        Cursor c = cursorLoader.loadInBackground();
+        if (c != null && c.getCount() > 0) {
+            return c;
+        }
+
+        return null;
+    }
+
     public long AddTopic (String doc_id, String title, Context context) {
         ContentValues values = new ContentValues();
         values.put(Contract.TopicEntry.COLUMN_DOC_ID, doc_id);
         values.put(Contract.TopicEntry.COLUMN_TOPIC_TITLE, title);
         Uri uri = context.getContentResolver().insert(Contract.TopicEntry.CONTENT_URI_ADD_TOPIC, values);
+        if (uri == null) return -1;
         return ContentUris.parseId(uri);
     }
 
@@ -114,12 +126,38 @@ public class DataProviderFunctions {
         return c;
     }
 
-    public void AddConf (String name, String time, String topic_id, Context context) {
+    public long AddConf (String name, String time, String topic_id, Context context) {
         ContentValues values = new ContentValues();
         values.put(Contract.ConfsEntry.COLUMN_CONF_NAME, name);
         values.put(Contract.ConfsEntry.COLUMN_CONF_DATETIME, time);
         values.put(Contract.ConfsEntry.COLUMN_TOPIC_ID, topic_id);
         Uri uri = context.getContentResolver().insert(Contract.ConfsEntry.CONTENT_URI_ADD_CONF, values);
+        if (uri == null) return -1;
+        return ContentUris.parseId(uri);
     }
 
+    public void deleteConf (String id, Context context) {
+        context.getContentResolver().delete(Contract.ConfsEntry.CONTENT_URI_DELETE_CONF.buildUpon().appendPath(id).build(), null, null);
+    }
+
+    public boolean UpdateConf (String conf_id, String name, String time, String topic_id, Context context) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(Contract.ConfsEntry.COLUMN_TOPIC_ID, topic_id);
+        contentValues.put(Contract.ConfsEntry.COLUMN_CONF_NAME, name);
+        contentValues.put(Contract.ConfsEntry.COLUMN_CONF_DATETIME, time);
+        if (context.getContentResolver().update(Contract.ConfsEntry.CONTENT_URI_UPDATE_CONF, contentValues, null, new String[]{conf_id}) == 1)
+            return true;
+        return false;
+    }
+
+    public long AddInvite (String doc_id, String admin_id, String conf_id, Context context) {
+        ContentValues values = new ContentValues();
+        values.put(Contract.InvitesEntry.COLUMN_DOC_ID, doc_id);
+        values.put(Contract.InvitesEntry.COLUMN_ADMIN_ID, admin_id);
+        values.put(Contract.InvitesEntry.COLUMN_CONF_ID, conf_id);
+        values.put(Contract.InvitesEntry.COLUMN_STATUS_ID, Contract.InviteStatusEntry.INVITE_STATUS_PENDING_ID);
+        Uri uri = context.getContentResolver().insert(Contract.InvitesEntry.CONTENT_URI_ADD_INVITE, values);
+        if (uri == null) return -1;
+        return ContentUris.parseId(uri);
+    }
 }
