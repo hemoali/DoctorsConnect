@@ -5,4 +5,5 @@
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="appbar_padding_top">8dp</dimen>
     <dimen name="sign_up_margin_top">10dp</dimen>
+    <dimen name="activity_login_padding">50dp</dimen>
 </resources>

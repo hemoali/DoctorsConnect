@@ -18,10 +18,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import ibrahim.radwan.doctorsconnect.Models.User;
 import ibrahim.radwan.doctorsconnect.Utils.Utils;
+import ibrahim.radwan.doctorsconnect.data.Contract;
 
 public class MainActivity extends AppCompatActivity {
-
+    private User mUser;
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
      * fragments for each of the sections. We use a
@@ -45,6 +47,11 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setTitle(R.string.app_name);
+
+        //Get user
+        Bundle bundle = getIntent().getExtras();
+        mUser = (User) bundle.getSerializable("user");
+
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
@@ -149,18 +156,16 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public int getCount () {
             // Show 3 total pages.
-            return 3;
+            return 2;
         }
 
         @Override
         public CharSequence getPageTitle (int position) {
             switch (position) {
                 case 0:
-                    return "SECTION 1";
+                    return String.valueOf(mUser.getTypeID()).equals(Contract.UserTypeEntry.USER_TYPE_ADMIN_ID) ? getString(R.string.conferences) : getString(R.string.topics);
                 case 1:
-                    return "SECTION 2";
-                case 2:
-                    return "SECTION 3";
+                    return String.valueOf(mUser.getTypeID()).equals(Contract.UserTypeEntry.USER_TYPE_ADMIN_ID) ? getString(R.string.topics) : getString(R.string.invites);
             }
             return null;
         }

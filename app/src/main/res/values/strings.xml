@@ -22,4 +22,7 @@
     <string name="section_format">Hello World from section: %1$d</string>
     <string name="action_sign_out">Sign Out</string>
     <string name="sign_up">Sign Up</string>
+    <string name="conferences">Conferences</string>
+    <string name="topics">Topics</string>
+    <string name="invites">Invites</string>
 </resources>
