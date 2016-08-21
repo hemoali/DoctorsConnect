@@ -18,6 +18,7 @@ public class DataProvider extends ContentProvider {
     static final int ADD_USER = 100;
     static final int LOGIN_USER = 101;
     static final int GET_USERS = 102;
+    static final int CHECK_EMAIL = 103;
 
     static final int ADD_INVITE = 200;
     static final int GET_INVITES = 201;
@@ -41,6 +42,7 @@ public class DataProvider extends ContentProvider {
         matcher.addURI(authority, Contract.PATH_USERS + "/" + Contract.UserEntry.PATH_USERS_SIGNUP, ADD_USER);
         matcher.addURI(authority, Contract.PATH_USERS + "/" + Contract.UserEntry.PATH_USERS_LOGIN, LOGIN_USER);
         matcher.addURI(authority, Contract.PATH_USERS, GET_USERS);
+        matcher.addURI(authority, Contract.PATH_USERS + "/" + Contract.UserEntry.PATH_USERS_EMAIL_CHECK, CHECK_EMAIL);
 
         matcher.addURI(authority, Contract.PATH_INVITES + "/" + Contract.InvitesEntry.PATH_GET_INVITES + "/#", GET_INVITES);
         matcher.addURI(authority, Contract.PATH_INVITES + "/" + Contract.InvitesEntry.PATH_ACCEPT_INVITE, ACCEPT_INVITE);
@@ -75,6 +77,8 @@ public class DataProvider extends ContentProvider {
             values.put(Contract.UserEntry.COLUMN_USER_EMAIL, selectionArgs[0]);
             values.put(Contract.UserEntry.COLUMN_USER_PASS, selectionArgs[1]);
             return database.userLogin(values);
+        } else if (uriMatcher.match(uri) == CHECK_EMAIL) {
+            return database.checkEmail(selectionArgs[0]);
         } else if (uriMatcher.match(uri) == GET_INVITES) {
             ContentValues values = new ContentValues();
             values.put(Contract.InvitesEntry.COLUMN_DOC_ID, uri.getPathSegments().get(2));
@@ -97,41 +101,24 @@ public class DataProvider extends ContentProvider {
     @Nullable
     @Override
     public Uri insert (Uri uri, ContentValues contentValues) {
-        if (uriMatcher.match(uri) == ADD_USER) {
-            try {
+        Uri returnUri = null;
+        try {
+            if (uriMatcher.match(uri) == ADD_USER) {
                 long id = database.insertUser(contentValues);
-                Uri returnUri = ContentUris.withAppendedId(Contract.UserEntry.CONTENT_URI_SIGNUP, id);
-                return returnUri;
-            } catch (Exception e) {
-                return null;
-            }
-        } else if (uriMatcher.match(uri) == ADD_INVITE) {
-            try {
+                returnUri = ContentUris.withAppendedId(Contract.UserEntry.CONTENT_URI_SIGNUP, id);
+            } else if (uriMatcher.match(uri) == ADD_INVITE) {
                 long id = database.insertInvite(contentValues);
-                Uri returnUri = ContentUris.withAppendedId(Contract.InvitesEntry.CONTENT_URI_ADD_INVITE, id);
-                return returnUri;
-            } catch (Exception e) {
-                return null;
-            }
-        } else if (uriMatcher.match(uri) == ADD_CONF) {
-            try {
-
+                returnUri = ContentUris.withAppendedId(Contract.InvitesEntry.CONTENT_URI_ADD_INVITE, id);
+            } else if (uriMatcher.match(uri) == ADD_CONF) {
                 long id = database.insertConf(contentValues);
-                Uri returnUri = ContentUris.withAppendedId(Contract.ConfsEntry.CONTENT_URI_ADD_CONF, id);
-                return returnUri;
-            } catch (Exception e) {
-                return null;
-            }
-        } else if (uriMatcher.match(uri) == ADD_TOPIC) {
-            try {
+                returnUri = ContentUris.withAppendedId(Contract.ConfsEntry.CONTENT_URI_ADD_CONF, id);
+            } else if (uriMatcher.match(uri) == ADD_TOPIC) {
                 long id = database.insertTopic(contentValues);
-                Uri returnUri = ContentUris.withAppendedId(Contract.TopicEntry.CONTENT_URI_ADD_TOPIC, id);
-                return returnUri;
-            } catch (Exception e) {
-                return null;
+                returnUri = ContentUris.withAppendedId(Contract.TopicEntry.CONTENT_URI_ADD_TOPIC, id);
             }
+        } catch (Exception e) {
         }
-        return null;
+        return returnUri;
     }
 
     @Override
@@ -145,14 +132,14 @@ public class DataProvider extends ContentProvider {
     @Override
     public int update (Uri uri, ContentValues contentValues, String s, String[] strings) {
         if (uriMatcher.match(uri) == ACCEPT_INVITE) {
-            boolean update = database.acceptInvite(strings[0]);
-            if (update) return 1;
+            if (database.acceptInvite(strings[0]))
+                return 1;
         } else if (uriMatcher.match(uri) == REJECT_INVITE) {
-            boolean update = database.rejectInvite(strings[0]);
-            if (update) return 1;
+            if (database.rejectInvite(strings[0]))
+                return 1;
         } else if (uriMatcher.match(uri) == UPDATE_CONF) {
-            boolean update = database.updateConf(strings[0], contentValues);
-            if (update) return 1;
+            if (database.updateConf(strings[0], contentValues))
+                return 1;
         }
         return 0;
     }

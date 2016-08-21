@@ -71,6 +71,15 @@ public class TestContentProvider extends AndroidTestCase {
         c.close();
     }
 
+    private void checkEmail (String email) {
+        CursorLoader cursorLoader = new CursorLoader(mContext, Contract.UserEntry.CONTENT_URI_EMAIL_CHECK,
+                null, null, new String[]{email}, null);
+        Cursor c = cursorLoader.loadInBackground();
+        c.moveToFirst();
+        assertTrue("Error: Email not found although its inserted !!!", c.getCount() > 0);
+        c.close();
+    }
+
     private void AddConf (String name, String time, String topic_id) {
         ContentValues values = new ContentValues();
         values.put(Contract.ConfsEntry.COLUMN_CONF_NAME, name);
@@ -166,6 +175,7 @@ public class TestContentProvider extends AndroidTestCase {
         AddUser("exADMIN@ex.com", "exexex", "2");
         AddUser("ex@exx.com", "exexex", "1");
 
+        checkEmail("exADMIN@ex.com");
 
         AddTopic("1", "aasd");
 

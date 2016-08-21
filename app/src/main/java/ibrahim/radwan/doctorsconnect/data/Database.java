@@ -168,6 +168,24 @@ public class Database extends SQLiteOpenHelper {
     }
 
     /**
+     * @return true if email exists
+     */
+    public Cursor checkEmail (String email) {
+        SQLiteQueryBuilder sqliteQueryBuilder = new SQLiteQueryBuilder();
+        sqliteQueryBuilder.setTables(Contract.UserEntry.TABLE_USERS);
+        Cursor cursor = sqliteQueryBuilder.query(getReadableDatabase(),
+                null,
+                Contract.UserEntry.COLUMN_USER_EMAIL + " = ?",
+                new String[]{email},
+                null,
+                null,
+                "");
+        if (cursor.moveToFirst() && cursor.getCount() > 0)
+            return cursor;
+        return null;
+    }
+
+    /**
      * Checks if the user doc ot admin
      *
      * @param id: user id

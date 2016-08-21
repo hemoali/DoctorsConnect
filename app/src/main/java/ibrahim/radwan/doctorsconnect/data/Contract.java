@@ -19,6 +19,7 @@ public class Contract {
     public static final class UserEntry {
         public static final String PATH_USERS_LOGIN = "login";
         public static final String PATH_USERS_SIGNUP = "signup";
+        public static final String PATH_USERS_EMAIL_CHECK = "check_email";
 
         public static final Uri CONTENT_URI_GET_USER =
                 BASE_CONTENT_URI.buildUpon().appendPath(PATH_USERS).build();
@@ -28,6 +29,9 @@ public class Contract {
 
         public static final Uri CONTENT_URI_SIGNUP =
                 CONTENT_URI_GET_USER.buildUpon().appendPath(PATH_USERS_SIGNUP).build();
+
+        public static final Uri CONTENT_URI_EMAIL_CHECK =
+                CONTENT_URI_GET_USER.buildUpon().appendPath(PATH_USERS_EMAIL_CHECK).build();
 
         public static final String TABLE_USERS = "users";
         public static final String COLUMN_USER_ID = "_id";
