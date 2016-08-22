@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteConstraintException;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.provider.CalendarContract;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SimpleCursorAdapter;
@@ -48,7 +49,7 @@ import ibrahim.radwan.doctorsconnect.utils.Utils;
 public class ListViewFragment extends Fragment {
     static private User mUser; // Current user
 
-    private List<Conference> allConferences = new ArrayList<>();
+    static private List<Conference> allConferences = new ArrayList<>();
     static private List<Invite> allInvites = new ArrayList<>();
 
     // Adapter
@@ -69,6 +70,7 @@ public class ListViewFragment extends Fragment {
     private ListView mainListView;
     private TextView noElementsView;
     static FloatingActionButton fab;
+    private View rootView;
 
     public ListViewFragment () {
     }
@@ -93,31 +95,32 @@ public class ListViewFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView (LayoutInflater inflater, ViewGroup container,
-                              Bundle savedInstanceState) {
+    public void onActivityCreated (@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
 
         //Get user
         mUser = Utils.getUserDataFromSharedPreferences(getContext());
 
-        //Define views
-        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+        fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick (View view) {
+                Intent i = new Intent(getContext(), AddConferenceActivity.class);
+                startActivity(i);
+                getActivity().finish();
+            }
+        });
+
         mainListView = (ListView) rootView.findViewById(R.id.main_list_view);
         noElementsView = (TextView) rootView.findViewById(R.id.no_elements_view);
-        fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
 
         //Admin Case
         if (mUser.getTypeID().equals(Contract.UserTypeEntry.USER_TYPE_ADMIN_ID)) {
             // Floating button to add new conference
-            fab.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick (View view) {
-                    Intent i = new Intent(getContext(), AddConferenceActivity.class);
-                    startActivity(i);
-                    getActivity().finish();
-                }
-            });
+
             //Setup list views depending on fragment
-            if (getArguments().getInt(ARG_SECTION_NUMBER) == 1) { // confs
+            if (getArguments() != null && getArguments().getInt(ARG_SECTION_NUMBER) == 1) { // confs
                 //Show add button
                 fab.setVisibility(View.VISIBLE);
 
@@ -131,6 +134,7 @@ public class ListViewFragment extends Fragment {
                     noElementsView.setVisibility(View.VISIBLE);
                 } else {
                     MainController.getInstance().getAllConferencesList(mConferenceCursor, allConferences);
+
                     registerForContextMenu(mainListView);
                     //to open the context menu on one click
                     mainListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -140,7 +144,7 @@ public class ListViewFragment extends Fragment {
                         }
                     });
                 }
-            } else if (getArguments().getInt(ARG_SECTION_NUMBER) == 2) { // topics
+            } else if (getArguments() != null && getArguments().getInt(ARG_SECTION_NUMBER) == 2) { // topics
 
                 //Hide add button
                 fab.setVisibility(View.INVISIBLE);
@@ -229,7 +233,7 @@ public class ListViewFragment extends Fragment {
                 }
             });
             // Setup listviews depending on the fragment
-            if (getArguments().getInt(ARG_SECTION_NUMBER) == 1) { // topics
+            if (getArguments() != null && getArguments().getInt(ARG_SECTION_NUMBER) == 1) { // topics
                 //Hide add button
                 fab.setVisibility(View.VISIBLE);
 
@@ -263,7 +267,7 @@ public class ListViewFragment extends Fragment {
                     mainListView.setVisibility(View.VISIBLE);
                     noElementsView.setVisibility(View.GONE);
                 }
-            } else if (getArguments().getInt(ARG_SECTION_NUMBER) == 2) { // invites
+            } else if (getArguments() != null && getArguments().getInt(ARG_SECTION_NUMBER) == 2) { // invites
                 //Hide add button
                 fab.setVisibility(View.INVISIBLE);
                 //Get invites
@@ -291,6 +295,15 @@ public class ListViewFragment extends Fragment {
                 }
             }
         }
+
+    }
+
+    @Override
+    public View onCreateView (LayoutInflater inflater, ViewGroup container,
+                              Bundle savedInstanceState) {
+        //Define views
+        rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
         return rootView;
     }
 
@@ -324,6 +337,7 @@ public class ListViewFragment extends Fragment {
         final int listPosition = info.position;
         if (mUser.getTypeID().equals(Contract.UserTypeEntry.USER_TYPE_ADMIN_ID)) {
             //Delete conf
+
             if (item.getTitle().toString().equals(getResources().getString(R.string.edit))) {
                 Intent i = new Intent(getContext(), AddConferenceActivity.class);
                 i.putExtra(Contract.ConfsEntry.COLUMN_CONF_ID, allConferences.get(listPosition).getId());

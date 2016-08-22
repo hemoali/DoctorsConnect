@@ -41,10 +41,12 @@ public class TestContentProvider extends AndroidTestCase {
             c = dpf.checkForEmail("exADMIN@ex.com", mContext);
             assertTrue("Error: Email not found although its inserted !!!", c.getCount() > 0);
             c.close();
+
             Utils.saveUserDataToSharedPreferences(new User("1", "ex@ex.com", null, "1"), getContext());
             assertTrue("Error, cannot insert topic!!!", dpf.AddTopic("1", "asd", mContext) != -1);
 
             assertFalse("Error: cannot load topic by id", dpf.getTopicByID("1", mContext) == null);
+
             Utils.saveUserDataToSharedPreferences(new User("2", "exADMIN@ex.com", null, "2"), getContext());
             assertTrue("Error, cannot insert conf!!!", dpf.AddConf("asd", "!23", "1", mContext) != -1);
 
@@ -68,6 +70,7 @@ public class TestContentProvider extends AndroidTestCase {
             assertTrue("Error, cannot insert conf!!!", dpf.AddConf("asd", "!23", "1", mContext) != -1);
 
             assertTrue("Error, cannot insert invite!!!", dpf.AddInvite("1", "2", "2", mContext) != -1);
+
             Utils.saveUserDataToSharedPreferences(new User("1", "ex@ex.com", null, "1"), getContext());
 
             c = dpf.getInvitesByDocID(mContext, "1");

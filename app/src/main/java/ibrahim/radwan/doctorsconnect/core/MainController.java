@@ -129,6 +129,7 @@ public class MainController {
     }
 
     public void getAllInvitesList (Cursor mInvitesCursor, List<Invite> allInvites) {
+        allInvites.clear();
         mInvitesCursor.moveToFirst();
         do {
             allInvites.add(new Invite(mInvitesCursor.getString(mInvitesCursor.getColumnIndex(Contract.InvitesEntry.COLUMN_INVITE_ID)),
