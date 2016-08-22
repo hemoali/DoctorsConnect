@@ -196,6 +196,7 @@ public class LoginActivity extends AppCompatActivity {
         userTypeRadioGroup.setVisibility(View.VISIBLE);
         Signup = true;
         mEmailSignInButton.setText(getString(R.string.action_register));
+        getSupportActionBar().setTitle(R.string.action_register);
     }
 
     /**
