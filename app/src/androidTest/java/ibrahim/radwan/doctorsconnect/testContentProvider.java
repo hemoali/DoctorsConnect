@@ -1,13 +1,9 @@
 package ibrahim.radwan.doctorsconnect;
 
-import android.content.ContentUris;
-import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
-import android.net.Uri;
-import android.support.v4.content.CursorLoader;
 import android.test.AndroidTestCase;
-import android.util.Log;
 
 import ibrahim.radwan.doctorsconnect.data.Contract;
 import ibrahim.radwan.doctorsconnect.data.DataProviderFunctions;
@@ -23,166 +19,6 @@ public class TestContentProvider extends AndroidTestCase {
         mContext.deleteDatabase(Contract.DATABASE_NAME);
     }
 
-    private void AddUser (String email, String pass, String type) {
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(Contract.UserEntry.COLUMN_USER_EMAIL, email);
-        contentValues.put(Contract.UserEntry.COLUMN_USER_PASS, pass);
-        contentValues.put(Contract.UserEntry.COLUMN_USER_TYPE, type);
-        Uri uri = mContext.getContentResolver().insert(Contract.UserEntry.CONTENT_URI_SIGNUP, contentValues);
-        assertTrue("Error, cannot insert user!!!", ContentUris.parseId(uri) != -1);
-    }
-
-    private void AddInvite (String doc_id, String admin_id, String conf_id) {
-        ContentValues values = new ContentValues();
-        values.put(Contract.InvitesEntry.COLUMN_DOC_ID, doc_id);
-        values.put(Contract.InvitesEntry.COLUMN_ADMIN_ID, admin_id);
-        values.put(Contract.InvitesEntry.COLUMN_CONF_ID, conf_id);
-        values.put(Contract.InvitesEntry.COLUMN_STATUS_ID, Contract.InviteStatusEntry.INVITE_STATUS_PENDING_ID);
-        Uri uri = mContext.getContentResolver().insert(Contract.InvitesEntry.CONTENT_URI_ADD_INVITE, values);
-        assertTrue("Error, cannot insert invite!!!", ContentUris.parseId(uri) != -1);
-    }
-
-    private void AcceptInvite (String id) {
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(Contract.InvitesEntry.COLUMN_STATUS_ID, Contract.InviteStatusEntry.INVITE_STATUS_ACCEPTED_ID);
-        mContext.getContentResolver().update(Contract.InvitesEntry.CONTENT_URI_ACCEPT_INVITE, contentValues, null, new String[]{id});
-
-    }
-
-    private void RejectInvite (String id) {
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(Contract.InvitesEntry.COLUMN_STATUS_ID, Contract.InviteStatusEntry.INVITE_STATUS_REJECTED_ID);
-        mContext.getContentResolver().update(Contract.InvitesEntry.CONTENT_URI_REJECT_INVITE, contentValues, null, new String[]{id});
-    }
-
-
-    private void checkLastInviteStatus (String inviteStatusId) {
-        CursorLoader cursorLoader = new CursorLoader(mContext, Contract.InvitesEntry.CONTENT_URI_GET_INVITES.buildUpon().appendPath("1").build(),
-                null, null, null, null);
-        Cursor c = cursorLoader.loadInBackground();
-        c.moveToFirst();
-        if (inviteStatusId.equals(Contract.InviteStatusEntry.INVITE_STATUS_REJECTED_ID)) {
-            assertFalse("Error: Can fetch rejected invites !!!", c.getCount() > 0);
-        } else {
-            assertTrue("Error: Cannot fetch invites !!!", c.getCount() > 0);
-        }
-        c.close();
-    }
-
-    private void checkEmail (String email) {
-        CursorLoader cursorLoader = new CursorLoader(mContext, Contract.UserEntry.CONTENT_URI_EMAIL_CHECK,
-                null, null, new String[]{email}, null);
-        Cursor c = cursorLoader.loadInBackground();
-        c.moveToFirst();
-        assertTrue("Error: Email not found although its inserted !!!", c.getCount() > 0);
-        c.close();
-    }
-
-    private void AddConf (String name, String time, String topic_id) {
-        ContentValues values = new ContentValues();
-        values.put(Contract.ConfsEntry.COLUMN_CONF_NAME, name);
-        values.put(Contract.ConfsEntry.COLUMN_CONF_DATETIME, time);
-        values.put(Contract.ConfsEntry.COLUMN_TOPIC_ID, topic_id);
-        Uri uri = mContext.getContentResolver().insert(Contract.ConfsEntry.CONTENT_URI_ADD_CONF, values);
-        assertTrue("Error, cannot insert conf!!!", ContentUris.parseId(uri) != -1);
-    }
-
-    private long AddTopic (String doc_id, String title) {
-        ContentValues values = new ContentValues();
-        values.put(Contract.TopicEntry.COLUMN_DOC_ID, doc_id);
-        values.put(Contract.TopicEntry.COLUMN_TOPIC_TITLE, title);
-        Uri uri = mContext.getContentResolver().insert(Contract.TopicEntry.CONTENT_URI_ADD_TOPIC, values);
-        assertTrue("Error, cannot insert topic!!!", ContentUris.parseId(uri) != -1);
-        return ContentUris.parseId(uri);
-    }
-
-    private void getUsers () {
-        CursorLoader cursorLoader = new CursorLoader(mContext, Contract.UserEntry.CONTENT_URI_GET_USER,
-                null, null, null, null);
-        Cursor c = cursorLoader.loadInBackground();
-        c.moveToFirst();
-        assertFalse("Error: Cannot fetch doctors", c.getCount() == 0);
-        c.close();
-    }
-
-    private void userLogin () {
-        CursorLoader cursorLoader = new CursorLoader(mContext, Contract.UserEntry.CONTENT_URI_LOGIN,
-                null, null, new String[]{"ex@exx.com", "exexex"}, null);
-        Cursor c = cursorLoader.loadInBackground();
-        c.moveToFirst();
-        assertFalse("Error: Cannot login user", c.getCount() == 0);
-        c.close();
-    }
-
-    private void getConfs () {
-        CursorLoader cursorLoader = new CursorLoader(mContext, Contract.ConfsEntry.CONTENT_URI_GET_CONFS,
-                null, null, null, null);
-        Cursor c = cursorLoader.loadInBackground();
-        c.moveToFirst();
-        assertFalse("Error: Cannot fetch confs", c.getCount() == 0);
-        c.close();
-    }
-
-    private void getTopics () {
-        CursorLoader cursorLoader = new CursorLoader(mContext, Contract.TopicEntry.CONTENT_URI_GET_TOPICS,
-                null, null, null, null);
-        Cursor c = cursorLoader.loadInBackground();
-        c.moveToFirst();
-        assertFalse("Error: Cannot fetch topics", c.getCount() == 0);
-        c.close();
-    }
-
-    private void UpdateConf (String conf_id, String name, String time, String topic_id) {
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(Contract.ConfsEntry.COLUMN_TOPIC_ID, topic_id);
-        contentValues.put(Contract.ConfsEntry.COLUMN_CONF_NAME, name);
-        contentValues.put(Contract.ConfsEntry.COLUMN_CONF_DATETIME, time);
-        mContext.getContentResolver().update(Contract.ConfsEntry.CONTENT_URI_UPDATE_CONF, contentValues, null, new String[]{conf_id});
-    }
-
-    private void checkLastConfStatus () {
-        CursorLoader cursorLoader = new CursorLoader(mContext, Contract.ConfsEntry.CONTENT_URI_GET_CONFS,
-                null, null, null, null);
-        Cursor c = cursorLoader.loadInBackground();
-        c.moveToFirst();
-        assertTrue("Error: Cannot fetch confs or some confs are incorrect", c.getCount() > 0 && c.getString(c.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_NAME)).equals("aaa"));
-        c.close();
-    }
-
-    private void checkEmptyConfList () {
-        CursorLoader cursorLoader = new CursorLoader(mContext, Contract.ConfsEntry.CONTENT_URI_GET_CONFS,
-                null, null, null, null);
-        Cursor c = cursorLoader.loadInBackground();
-        assertTrue("Error: Loaded even if no data", c.getCount() == 0);
-        c.close();
-    }
-
-    private void deleteConf (String id) {
-        mContext.getContentResolver().delete(Contract.ConfsEntry.CONTENT_URI_DELETE_CONF.buildUpon().appendPath(id).build(), null, null);
-    }
-
-    private void getTopicByID (String id) {
-        CursorLoader cursorLoader = new CursorLoader(mContext, Contract.TopicEntry.CONTENT_URI_GET_TOPIC_BY_ID.buildUpon().appendPath(id).build(),
-                null, null, null, null);
-        Cursor c = cursorLoader.loadInBackground();
-        assertFalse("Error: cannot load topic by id", c.getCount() == 0);
-        c.close();
-    }
-
-    private void getUserByID (String id) {
-        CursorLoader cursorLoader = new CursorLoader(mContext, Contract.UserEntry.CONTENT_URI_GET_USER.buildUpon().appendPath(id).build(),
-                null, null, null, null);
-        Cursor c = cursorLoader.loadInBackground();
-        assertFalse("Error: cannot load user by id" + c.getCount(), c.getCount() == 0);
-        c.close();
-    }
-    private void getConfByID (String id) {
-        CursorLoader cursorLoader = new CursorLoader(mContext, Contract.ConfsEntry.CONTENT_URI_GET_CONF_BY_ID.buildUpon().appendPath(id).build(),
-                null, null, null, null);
-        Cursor c = cursorLoader.loadInBackground();
-        assertFalse("Error: cannot load user by id" + c.getCount(), c.getCount() == 0);
-        c.close();
-    }
     public void testProvider () {
 
         Database database = new Database(
@@ -191,56 +27,82 @@ public class TestContentProvider extends AndroidTestCase {
         assertEquals(true, db.isOpen());
 
         Cursor c;
-        // testing insert using URI
+        DataProviderFunctions dpf = DataProviderFunctions.getInstance();
+        try {
+            assertTrue("Error, cannot insert user!!!", dpf.AddUser("ex@ex.com", "exexex", "1", mContext) != null);
+            assertTrue("Error, cannot insert user!!!", dpf.AddUser("exADMIN@ex.com", "exexex", "2", mContext) != null);
+            assertTrue("Error, cannot insert user!!!", dpf.AddUser("ex@exx.com", "exexex", "1", mContext) != null);
 
-        AddUser("ex@ex.com", "exexex", "1");
-        AddUser("exADMIN@ex.com", "exexex", "2");
-        AddUser("ex@exx.com", "exexex", "1");
-        getUserByID("1");
-        checkEmail("exADMIN@ex.com");
+            assertFalse("Error: cannot load user by id", dpf.getUserByID("1", mContext) == null);
 
-        Log.v("TAG", AddTopic("1", "aasd") + "");
-        getTopicByID("1");
+            c = dpf.checkForEmail("exADMIN@ex.com", mContext);
+            assertTrue("Error: Email not found although its inserted !!!", c.getCount() > 0);
+            c.close();
+            assertTrue("Error, cannot insert topic!!!", dpf.AddTopic("1", "asd", mContext) != -1);
 
-        //Test confs actions
-        AddConf("asd", "!23", "1");
-        getConfByID("1");
+            assertFalse("Error: cannot load topic by id", dpf.getTopicByID("1", mContext) == null);
 
-        UpdateConf("1", "aaa", "!we", "1");
-        checkLastConfStatus();
-        deleteConf("1");
-        checkEmptyConfList();
+            assertTrue("Error, cannot insert conf!!!", dpf.AddConf("asd", "!23", "1", mContext) != -1);
 
-        AddConf("asd", "!23", "1");
+            c = dpf.getConfByID("1", mContext);
+            assertFalse("Error: cannot load user by id", c.getCount() == 0);
+            c.close();
 
-        //testing adding invites
-        AddInvite("1", "2", "2");
+            assertTrue("Error: cannot update the conference", dpf.UpdateConf("1", "aaa", "!we", "1", mContext) == true);
 
-        // update/check statuses
-        checkLastInviteStatus(Contract.InviteStatusEntry.INVITE_STATUS_PENDING_ID);
-        AcceptInvite("1");
-        checkLastInviteStatus(Contract.InviteStatusEntry.INVITE_STATUS_ACCEPTED_ID);
-        RejectInvite("1");
-        checkLastInviteStatus(Contract.InviteStatusEntry.INVITE_STATUS_REJECTED_ID);
+            c = dpf.getConfByID("1", mContext);
+            c.moveToFirst();
+            assertTrue("Error: cannot update the conference" + c.getString(c.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_NAME)), c.getString(c.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_NAME)).equals("aaa"));
+            c.close();
 
-        // Query get users
-        getUsers();
+            assertTrue("Error: cannot delete the conference", dpf.deleteConf("1", mContext) == true);
 
-        //Login user
+            c = dpf.getConfs(mContext);
+            assertTrue("Error, deleting operation failed !!!", c.getCount() == 0);
+            c.close();
 
-        userLogin();
+            assertTrue("Error, cannot insert conf!!!", dpf.AddConf("asd", "!23", "1", mContext) != -1);
 
-        //Get invites
-        c = DataProviderFunctions.getInstance().getInvitesByDocID(mContext, "1");
-        assertFalse("Error, Can fetch rejected invites", c.getCount() > 0);
-        //Get confs
-        getConfs();
+            assertTrue("Error, cannot insert invite!!!", dpf.AddInvite("1", "2", "2", mContext) != -1);
 
+            c = dpf.getInvitesByDocID(mContext, "1");
+            c.moveToFirst();
+            assertTrue("Error, default invite status must be pending!!!", c.getString(c.getColumnIndex(Contract.InvitesEntry.COLUMN_STATUS_ID)).equals(Contract.InviteStatusEntry.INVITE_STATUS_PENDING_ID));
+            c.close();
+
+            assertTrue("Error, Cannot accept invite", dpf.AcceptInvite("1", mContext) == true);
+            c = dpf.getInvitesByDocID(mContext, "1");
+            c.moveToFirst();
+            assertTrue("Error, default invite status must be pending!!!", c.getString(c.getColumnIndex(Contract.InvitesEntry.COLUMN_STATUS_ID)).equals(Contract.InviteStatusEntry.INVITE_STATUS_ACCEPTED_ID));
+            c.close();
+
+            assertTrue("Error, Cannot reject invite", dpf.RejectInvite("1", mContext) == true);
+
+            c = dpf.getDoctors(mContext);
+            assertFalse("Error: Cannot fetch doctors", c.getCount() == 0);
+            c.close();
+
+            assertFalse("Error: Cannot login user", dpf.userLogin("ex@exx.com", "exexex", mContext) == null);
+
+            c = DataProviderFunctions.getInstance().getInvitesByDocID(mContext, "1");
+            assertFalse("Error, Can fetch rejected invites", c.getCount() > 0);
+            c.close();
+
+            c = dpf.getConfs(mContext);
+            assertFalse("Error: Cannot fetch confs", c.getCount() == 0);
+            c.close();
+
+            c = dpf.getTopics(mContext);
+            assertFalse("Error: Cannot fetch topics", c.getCount() == 0);
+            c.close();
+
+        } catch (SQLiteConstraintException e) {
+            e.printStackTrace();
+            fail("SQLite Constraint Error");
+        }
         //Get Topics
-        getTopics();
         database.close();
         db.close();
-        c.close();
     }
 
     @Override

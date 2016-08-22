@@ -2,6 +2,7 @@ package ibrahim.radwan.doctorsconnect.Utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 
 import ibrahim.radwan.doctorsconnect.Models.User;
 import ibrahim.radwan.doctorsconnect.data.Contract;
@@ -45,5 +46,11 @@ public class Utils {
         editor.remove(Contract.UserEntry.COLUMN_USER_EMAIL);
         editor.remove(Contract.UserEntry.COLUMN_USER_PASS);
         editor.commit();
+    }
+
+    public static boolean isTablet (Context context) {
+        return (context.getResources().getConfiguration().screenLayout
+                & Configuration.SCREENLAYOUT_SIZE_MASK)
+                >= Configuration.SCREENLAYOUT_SIZE_LARGE;
     }
 }

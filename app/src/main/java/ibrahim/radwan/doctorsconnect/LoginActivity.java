@@ -50,6 +50,7 @@ public class LoginActivity extends AppCompatActivity {
     private View mProgressView;
     private View mLoginFormView;
     private boolean Signup = false;
+    private Button mEmailSignInButton;
 
     @Override
     protected void onCreate (Bundle savedInstanceState) {
@@ -90,7 +91,7 @@ public class LoginActivity extends AppCompatActivity {
         userTypeDoctor = (RadioButton) findViewById(R.id.doctor);
         userTypeAdmin = (RadioButton) findViewById(R.id.admin);
 
-        Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
+        mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
         mEmailSignInButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick (View view) {
@@ -193,6 +194,7 @@ public class LoginActivity extends AppCompatActivity {
         view.setVisibility(View.GONE);
         userTypeRadioGroup.setVisibility(View.VISIBLE);
         Signup = true;
+        mEmailSignInButton.setText(getString(R.string.action_register));
     }
 
     /**

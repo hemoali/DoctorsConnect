@@ -11,7 +11,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.support.v7.app.AlertDialog;
 import android.text.InputType;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -243,8 +242,6 @@ public class ListViewFragment extends Fragment {
                     mInviteAdapter.swapCursor(cursor);
                     cursor.moveToFirst();
                     do {
-                        Log.e("TAGSTAGSTAGSTAGS", cursor.getCount() + "  ");
-
                         allInvites.add(new Invite(cursor.getString(cursor.getColumnIndex(Contract.InvitesEntry.COLUMN_INVITE_ID)),
                                 cursor.getString(cursor.getColumnIndex(Contract.InvitesEntry.COLUMN_CONF_ID)),
                                 cursor.getString(cursor.getColumnIndex(Contract.InvitesEntry.COLUMN_ADMIN_ID)),
@@ -320,7 +317,6 @@ public class ListViewFragment extends Fragment {
                     noElementsView.setVisibility(View.VISIBLE);
                 }
             } else if (item.getTitle().toString().equals(getResources().getString(R.string.send_invites))) {
-                Log.e("ERROR", "ConfID " + allConferences.get(listPosition).getId() + " Pos = " + listPosition);
                 //Get all docotrs
                 final Cursor allDoctors = DataProviderFunctions.getInstance().getDoctors(getActivity());
 
@@ -335,7 +331,7 @@ public class ListViewFragment extends Fragment {
                         View view = super.getView(position, convertView, parent);
                         TextView text1 = (TextView) view.findViewById(android.R.id.text1);
                         text1.setTextColor(Color.BLACK);
-                        text1.setTextSize(getResources().getDimension(R.dimen.small_font_size) / 2);
+                        text1.setTextSize(getResources().getDimension(R.dimen.normal_font_size));
                         return view;
                     }
                 };
@@ -373,8 +369,6 @@ public class ListViewFragment extends Fragment {
                 builderSingle.show();
             }
         } else if (mUser.getTypeID().equals(Contract.UserTypeEntry.USER_TYPE_USER_ID)) {
-            Log.e("TAGSTAGSTAGSTAGS2333322", allInvites.size() + "  ");
-
             if (item.getTitle().toString().equals(getResources().getString(R.string.accept))) {
                 DataProviderFunctions.getInstance().AcceptInvite(allInvites.get(listPosition).getId(), getContext());
                 Cursor c = DataProviderFunctions.getInstance().getInvitesByDocID(getContext(), mUser.getUserID());

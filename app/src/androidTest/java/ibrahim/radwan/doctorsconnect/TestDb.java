@@ -6,7 +6,6 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.test.AndroidTestCase;
-import android.util.Log;
 
 import java.util.HashSet;
 
@@ -109,7 +108,6 @@ public class TestDb extends AndroidTestCase {
         userTypeListColumnHashSet.add(Contract.UserTypeEntry.USER_TYPE_ADMIN);
         userTypeListColumnHashSet.add(Contract.UserTypeEntry.USER_TYPE_USER);
         columnNameIndex = userTypeCursor.getColumnIndex("type_name");
-        Log.e("Error", "Count " + userTypeCursor.getCount());
         do {
             String val = userTypeCursor.getString(columnNameIndex);
             userTypeListColumnHashSet.remove(val);
@@ -372,7 +370,6 @@ public class TestDb extends AndroidTestCase {
         long user_id = -1;
         try {
             user_id = database.insertUser(values);
-            Log.e("ERROR", "ID " + user_id);
             assertFalse("Error inserting user", user_id == -1);
         } catch (SQLException e) {
         }
