@@ -5,9 +5,9 @@ import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.test.AndroidTestCase;
 
-import ibrahim.radwan.doctorsconnect.Models.User;
-import ibrahim.radwan.doctorsconnect.Utils.PermissionException;
-import ibrahim.radwan.doctorsconnect.Utils.Utils;
+import ibrahim.radwan.doctorsconnect.models.User;
+import ibrahim.radwan.doctorsconnect.utils.PermissionException;
+import ibrahim.radwan.doctorsconnect.utils.Utils;
 import ibrahim.radwan.doctorsconnect.data.Contract;
 import ibrahim.radwan.doctorsconnect.data.DataProviderFunctions;
 import ibrahim.radwan.doctorsconnect.data.Database;

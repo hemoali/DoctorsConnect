@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="doctors_list_font_size">18sp</dimen>
+    <dimen name="maxtextview_width">450dp</dimen>
+
 </resources>

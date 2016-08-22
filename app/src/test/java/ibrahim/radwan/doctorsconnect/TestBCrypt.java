@@ -2,7 +2,7 @@ package ibrahim.radwan.doctorsconnect;
 
 import org.junit.Test;
 
-import ibrahim.radwan.doctorsconnect.Utils.BCrypt;
+import ibrahim.radwan.doctorsconnect.utils.BCrypt;
 
 public class TestBCrypt {
     @Test

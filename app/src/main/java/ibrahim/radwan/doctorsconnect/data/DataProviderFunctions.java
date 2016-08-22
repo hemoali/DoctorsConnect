@@ -8,9 +8,9 @@ import android.database.sqlite.SQLiteConstraintException;
 import android.net.Uri;
 import android.support.v4.content.CursorLoader;
 
-import ibrahim.radwan.doctorsconnect.Models.User;
-import ibrahim.radwan.doctorsconnect.Models.Topic;
-import ibrahim.radwan.doctorsconnect.Utils.PermissionException;
+import ibrahim.radwan.doctorsconnect.models.User;
+import ibrahim.radwan.doctorsconnect.models.Topic;
+import ibrahim.radwan.doctorsconnect.utils.PermissionException;
 
 /**
  * Created by ibrahimradwan on 8/21/16.
@@ -336,5 +336,6 @@ public class DataProviderFunctions {
             return true;
         return false;
     }
+
 
 }

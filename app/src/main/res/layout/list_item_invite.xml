@@ -24,6 +24,7 @@
         android:layout_toRightOf="@+id/status_imageview"
         android:text="Conf name..."
         android:textSize="@dimen/large_text_size"
+        android:maxWidth="@dimen/maxtextview_width"
         android:textStyle="bold"/>
 
     <TextView
@@ -35,6 +36,7 @@
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_toEndOf="@+id/status_imageview"
         android:layout_toRightOf="@+id/status_imageview"
+        android:maxWidth="@dimen/maxtextview_width"
         android:text="Topic title..."
         android:textSize="@dimen/normal_font_size"/>
 
@@ -45,6 +47,7 @@
         android:layout_below="@+id/topic_textview"
         android:layout_marginLeft="@dimen/activity_horizontal_margin"
         android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:maxWidth="@dimen/maxtextview_width"
         android:layout_marginTop="@dimen/admin_email_margin_top"
         android:layout_toEndOf="@+id/status_imageview"
         android:layout_toRightOf="@+id/status_imageview"

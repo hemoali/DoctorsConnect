@@ -3,7 +3,6 @@ package ibrahim.radwan.doctorsconnect;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -24,11 +23,11 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-import ibrahim.radwan.doctorsconnect.Models.Topic;
-import ibrahim.radwan.doctorsconnect.Utils.PermissionException;
 import ibrahim.radwan.doctorsconnect.adapters.TopicsSpinnerAdapter;
+import ibrahim.radwan.doctorsconnect.core.MainController;
 import ibrahim.radwan.doctorsconnect.data.Contract;
-import ibrahim.radwan.doctorsconnect.data.DataProviderFunctions;
+import ibrahim.radwan.doctorsconnect.models.Topic;
+import ibrahim.radwan.doctorsconnect.utils.PermissionException;
 
 public class AddConferenceActivity extends AppCompatActivity {
     //Topic connected to conf
@@ -49,6 +48,9 @@ public class AddConferenceActivity extends AppCompatActivity {
     Spinner topicSpinner;
     TextView noTopicsTV;
     Button addConf;
+
+    Calendar currentCalendar = Calendar.getInstance();
+    final Calendar newDate = Calendar.getInstance();
 
     @Override
     protected void onCreate (Bundle savedInstanceState) {
@@ -75,48 +77,15 @@ public class AddConferenceActivity extends AppCompatActivity {
             }
         });
 
-        setupTopicsSpinner();
         //setup topics spinner
+        setupTopicsSpinner();
 
-        // Setup date picker
-        dateFormatter = new SimpleDateFormat("MMM, dd yyyy  k:m", Locale.US);
+        setupDatePicker();
 
-        Calendar currentCalendar = Calendar.getInstance();
-        final Calendar newDate = Calendar.getInstance();
-        datePickerDialog = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
+        setupTimePicker();
 
-            public void onDateSet (DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-                newDate.set(year, monthOfYear, dayOfMonth);
-                timePickerDialog.show();
-            }
+        checkForIntentExtrasInCaseOfEditing();
 
-        }, currentCalendar.get(Calendar.YEAR), currentCalendar.get(Calendar.MONTH), currentCalendar.get(Calendar.DAY_OF_MONTH));
-        datePickerDialog.setCancelable(false);
-        datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
-        //Setup Timepicker
-        timePickerDialog = new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
-            @Override
-            public void onTimeSet (TimePicker timePicker, int hour, int minute) {
-                newDate.set(Calendar.HOUR_OF_DAY, hour);
-                newDate.set(Calendar.MINUTE, minute);
-                confDateTimeEditText.setText(dateFormatter.format(newDate.getTime()));
-            }
-        }, currentCalendar.get(Calendar.HOUR_OF_DAY), currentCalendar.get(Calendar.MINUTE), true);
-
-        //Check for intent extras (Edit conf)
-        if (getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_ID) != null) {
-            confNameEditText.setText(getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_NAME));
-            confDateTimeEditText.setText(getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_DATETIME));
-            Topic toBeSelected = null;
-            for (Topic t : topics) {
-                if (t.getId().equals(getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_TOPIC_ID)))
-                    toBeSelected = t;
-            }
-            topic_id = getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_TOPIC_ID);
-            topicSpinner.setSelection(topics.indexOf(toBeSelected));
-            addConf.setText(R.string.edit_conference);
-
-        }
 
         // Adding/Editing topic button
         addConf.setOnClickListener(new View.OnClickListener() {
@@ -128,9 +97,11 @@ public class AddConferenceActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), R.string.all_fileds_are_required, Toast.LENGTH_SHORT).show();
                     return;
                 }
+                //Edit conf
                 if (getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_ID) != null) {
+
                     try {
-                        if (DataProviderFunctions.getInstance().UpdateConf(getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_ID), confName, confDateTime, topic_id, getBaseContext())) {
+                        if (MainController.getInstance().editConf(getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_ID), confName, confDateTime, topic_id, getBaseContext())) {
                             Toast.makeText(getApplicationContext(), R.string.conference_updated, Toast.LENGTH_SHORT).show();
                             onBackPressed();
                         } else {
@@ -142,9 +113,9 @@ public class AddConferenceActivity extends AppCompatActivity {
                         Toast.makeText(getApplicationContext(), R.string.no_access, Toast.LENGTH_SHORT).show();
                     }
 
-                } else {
+                } else {// New conf
                     try {
-                        if (-1 != DataProviderFunctions.getInstance().AddConf(confName, confDateTime, topic_id, getApplicationContext())) {
+                        if (-1 != MainController.getInstance().AddNewConf(confName, confDateTime, topic_id, getApplicationContext())) {
                             Toast.makeText(getApplicationContext(), R.string.conference_added_successfully, Toast.LENGTH_SHORT).show();
                             onBackPressed();
                         } else {
@@ -161,23 +132,54 @@ public class AddConferenceActivity extends AppCompatActivity {
 
     }
 
+    private void checkForIntentExtrasInCaseOfEditing () {
+        //Check for intent extras (Edit conf)
+        if (getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_ID) != null) {
+            confNameEditText.setText(getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_NAME));
+            confDateTimeEditText.setText(getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_DATETIME));
+            Topic toBeSelected = null;
+            for (Topic t : topics) {
+                if (t.getId().equals(getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_TOPIC_ID)))
+                    toBeSelected = t;
+            }
+            topic_id = getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_TOPIC_ID);
+            topicSpinner.setSelection(topics.indexOf(toBeSelected));
+            addConf.setText(R.string.edit_conference);
+        }
+    }
+
+    private void setupTimePicker () {
+        timePickerDialog = new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
+            @Override
+            public void onTimeSet (TimePicker timePicker, int hour, int minute) {
+                newDate.set(Calendar.HOUR_OF_DAY, hour);
+                newDate.set(Calendar.MINUTE, minute);
+                confDateTimeEditText.setText(dateFormatter.format(newDate.getTime()));
+            }
+        }, currentCalendar.get(Calendar.HOUR_OF_DAY), currentCalendar.get(Calendar.MINUTE), true);
+    }
+
+    private void setupDatePicker () {
+        dateFormatter = new SimpleDateFormat("MMM, dd yyyy  k:m", Locale.US);
+
+        datePickerDialog = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
+
+            public void onDateSet (DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                newDate.set(year, monthOfYear, dayOfMonth);
+                timePickerDialog.show();
+            }
+
+        }, currentCalendar.get(Calendar.YEAR), currentCalendar.get(Calendar.MONTH), currentCalendar.get(Calendar.DAY_OF_MONTH));
+        datePickerDialog.setCancelable(false);
+        datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
+    }
+
     /**
      * Sets up the topics spinner so the admin can pick the topic title from the list
      */
     private void setupTopicsSpinner () {
-        // Get the topics
-        Cursor topicsCursor = DataProviderFunctions.getInstance().getTopics(getApplicationContext());
-
-        if (topicsCursor != null && topicsCursor.getCount() > 0) {
-
-            topicsCursor.moveToFirst();
-            /* Fill topics to the @topics list */
-            do {
-                topics.add(
-                        new Topic(topicsCursor.getString(topicsCursor.getColumnIndex(Contract.TopicEntry.COLUMN_TOPIC_ID)),
-                                topicsCursor.getString(topicsCursor.getColumnIndex(Contract.TopicEntry.COLUMN_DOC_ID)),
-                                topicsCursor.getString(topicsCursor.getColumnIndex(Contract.TopicEntry.COLUMN_TOPIC_TITLE))));
-            } while (topicsCursor.moveToNext());
+        // Call main controller to fill topics
+        if (MainController.getInstance().getTopicsListForTopicsSpinner(getApplicationContext(), topics)) {
             /* Define the adapter with the @topics list */
             final TopicsSpinnerAdapter dataAdapter = new TopicsSpinnerAdapter(getBaseContext(), android.R.layout.simple_spinner_item, topics);
             dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -199,12 +201,12 @@ public class AddConferenceActivity extends AppCompatActivity {
             noTopicsTV.setVisibility(View.VISIBLE);
             topicSpinner.setVisibility(View.GONE);
         }
-        topicsCursor.close();
     }
 
     /**
      * Defines the activity views
      */
+
     public void defineViews () {
         confNameEditText = (EditText) findViewById(R.id.conf_name_edittext);
         confDateTimeEditText = (EditText) findViewById(R.id.conf_datetime_editText);

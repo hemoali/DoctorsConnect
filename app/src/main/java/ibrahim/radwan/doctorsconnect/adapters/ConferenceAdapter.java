@@ -8,7 +8,7 @@ import android.view.ViewGroup;
 import android.widget.CursorAdapter;
 import android.widget.TextView;
 
-import ibrahim.radwan.doctorsconnect.Models.Topic;
+import ibrahim.radwan.doctorsconnect.models.Topic;
 import ibrahim.radwan.doctorsconnect.R;
 import ibrahim.radwan.doctorsconnect.data.Contract;
 import ibrahim.radwan.doctorsconnect.data.DataProviderFunctions;

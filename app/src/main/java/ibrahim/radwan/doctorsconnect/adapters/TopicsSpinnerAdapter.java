@@ -2,7 +2,6 @@ package ibrahim.radwan.doctorsconnect.adapters;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -11,7 +10,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-import ibrahim.radwan.doctorsconnect.Models.Topic;
+import ibrahim.radwan.doctorsconnect.models.Topic;
 
 /**
  * Created by ibrahimradwan on 8/21/16.

@@ -1,10 +1,10 @@
-package ibrahim.radwan.doctorsconnect.Utils;
+package ibrahim.radwan.doctorsconnect.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 
-import ibrahim.radwan.doctorsconnect.Models.User;
+import ibrahim.radwan.doctorsconnect.models.User;
 import ibrahim.radwan.doctorsconnect.data.Contract;
 
 /**

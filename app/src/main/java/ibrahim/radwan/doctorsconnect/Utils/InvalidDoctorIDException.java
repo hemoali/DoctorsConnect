@@ -1,4 +1,4 @@
-package ibrahim.radwan.doctorsconnect.Utils;
+package ibrahim.radwan.doctorsconnect.utils;
 
 /**
  * Created by ibrahimradwan on 8/20/16.

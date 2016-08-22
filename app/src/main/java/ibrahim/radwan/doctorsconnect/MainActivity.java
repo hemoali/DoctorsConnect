@@ -14,8 +14,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import ibrahim.radwan.doctorsconnect.Models.User;
-import ibrahim.radwan.doctorsconnect.Utils.Utils;
+import ibrahim.radwan.doctorsconnect.models.User;
+import ibrahim.radwan.doctorsconnect.utils.Utils;
 import ibrahim.radwan.doctorsconnect.data.Contract;
 
 public class MainActivity extends AppCompatActivity {

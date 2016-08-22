@@ -9,10 +9,10 @@ import android.test.AndroidTestCase;
 
 import java.util.HashSet;
 
-import ibrahim.radwan.doctorsconnect.Models.User;
-import ibrahim.radwan.doctorsconnect.Utils.InvalidDoctorIDException;
-import ibrahim.radwan.doctorsconnect.Utils.PermissionException;
-import ibrahim.radwan.doctorsconnect.Utils.Utils;
+import ibrahim.radwan.doctorsconnect.models.User;
+import ibrahim.radwan.doctorsconnect.utils.InvalidDoctorIDException;
+import ibrahim.radwan.doctorsconnect.utils.PermissionException;
+import ibrahim.radwan.doctorsconnect.utils.Utils;
 import ibrahim.radwan.doctorsconnect.data.Contract;
 import ibrahim.radwan.doctorsconnect.data.Database;
 

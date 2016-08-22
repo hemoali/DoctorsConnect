@@ -9,8 +9,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.support.annotation.Nullable;
 
-import ibrahim.radwan.doctorsconnect.Utils.PermissionException;
-import ibrahim.radwan.doctorsconnect.Utils.Utils;
+import ibrahim.radwan.doctorsconnect.utils.PermissionException;
+import ibrahim.radwan.doctorsconnect.utils.Utils;
 
 /**
  * Created by ibrahimradwan on 8/20/16.

@@ -9,9 +9,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 
-import ibrahim.radwan.doctorsconnect.Utils.BCrypt;
-import ibrahim.radwan.doctorsconnect.Utils.InvalidDoctorIDException;
-import ibrahim.radwan.doctorsconnect.Utils.PermissionException;
+import ibrahim.radwan.doctorsconnect.utils.BCrypt;
+import ibrahim.radwan.doctorsconnect.utils.InvalidDoctorIDException;
+import ibrahim.radwan.doctorsconnect.utils.PermissionException;
 
 /**
  * Created by ibrahimradwan on 8/20/16.

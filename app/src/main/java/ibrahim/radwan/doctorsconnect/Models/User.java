@@ -1,4 +1,4 @@
-package ibrahim.radwan.doctorsconnect.Models;
+package ibrahim.radwan.doctorsconnect.models;
 
 import java.io.Serializable;
 

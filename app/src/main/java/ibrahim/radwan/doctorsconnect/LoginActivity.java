@@ -22,10 +22,10 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import ibrahim.radwan.doctorsconnect.Models.User;
-import ibrahim.radwan.doctorsconnect.Utils.Utils;
+import ibrahim.radwan.doctorsconnect.core.MainController;
 import ibrahim.radwan.doctorsconnect.data.Contract;
-import ibrahim.radwan.doctorsconnect.data.DataProviderFunctions;
+import ibrahim.radwan.doctorsconnect.models.User;
+import ibrahim.radwan.doctorsconnect.utils.Utils;
 
 /**
  * A login screen that offers login via email/password.
@@ -217,17 +217,16 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected User doInBackground (Void... params) {
             //Check for existing account
-            DataProviderFunctions dataProviderFunctions = DataProviderFunctions.getInstance();
             if (Looper.myLooper() == null) Looper.prepare();
             //Check if email exists
-            Cursor emailCursor = dataProviderFunctions.checkForEmail(mEmail, getApplicationContext());
+            Cursor emailCursor = MainController.getInstance().checkForEmail(mEmail, getApplicationContext());
             User u = null;
             if (emailCursor != null && emailCursor.moveToFirst() && emailCursor.getCount() > 0) {
                 if (emailCursor != null) emailCursor.close();
-                u = dataProviderFunctions.userLogin(mEmail, mPassword, getApplicationContext());
+                u = MainController.getInstance().userLogin(mEmail, mPassword, getApplicationContext());
             } else if (Signup) {
                 try {
-                    u = dataProviderFunctions.AddUser(mEmail, mPassword, String.valueOf(mUserType), getApplicationContext());
+                    u = MainController.getInstance().AddUser(mEmail, mPassword, String.valueOf(mUserType), getApplicationContext());
                     runOnUiThread(new Runnable() {
                         public void run () {
                             Toast.makeText(getApplicationContext(), R.string.sign_up_completed, Toast.LENGTH_SHORT).show();
