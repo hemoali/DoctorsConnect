@@ -54,8 +54,11 @@ public class ListViewFragment extends Fragment {
     static private SimpleCursorAdapter topicsAdapter;
     static private InviteAdapter mInviteAdapter;
 
+    //Admin Cursors
+    static private Cursor mConferenceCursor, topicsCursor, allDoctorsCursor;
 
-    static private Cursor mTopicsCursor;
+    //Doc Cursors
+    static private Cursor mTopicsCursor, mInvitesCursor, confCursor;
     private static final String ARG_SECTION_NUMBER = "section_number";
     //Views
     private ListView mainListView;
@@ -71,6 +74,17 @@ public class ListViewFragment extends Fragment {
         args.putInt(ARG_SECTION_NUMBER, sectionNumber);
         fragment.setArguments(args);
         return fragment;
+    }
+
+    @Override
+    public void onDestroyView () {
+        super.onDestroyView();
+        if (mConferenceCursor != null) mConferenceCursor.close();
+        if (topicsCursor != null) topicsCursor.close();
+        if (allDoctorsCursor != null) allDoctorsCursor.close();
+
+        if (mTopicsCursor != null) mTopicsCursor.close();
+        if (mInvitesCursor != null) mInvitesCursor.close();
     }
 
     @Override
@@ -103,22 +117,22 @@ public class ListViewFragment extends Fragment {
                 fab.setVisibility(View.VISIBLE);
 
                 mConferenceAdapter = new ConferenceAdapter(getContext(), null, 0);
-                Cursor c = DataProviderFunctions.getInstance().getConfs(getContext());
-                mConferenceAdapter.swapCursor(c);
+                mConferenceCursor = DataProviderFunctions.getInstance().getConfs(getContext());
+                mConferenceAdapter.swapCursor(mConferenceCursor);
                 mainListView.setAdapter(mConferenceAdapter);
 
-                if (c.getCount() == 0) {
+                if (mConferenceCursor.getCount() == 0) {
                     mainListView.setVisibility(View.GONE);
                     noElementsView.setVisibility(View.VISIBLE);
                 } else {
-                    c.moveToFirst();
+                    mConferenceCursor.moveToFirst();
                     allInvites.clear();
                     do {
-                        allConferences.add(new Conference(c.getString(c.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_ID)),
-                                c.getString(c.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_NAME)),
-                                c.getString(c.getColumnIndex(Contract.ConfsEntry.COLUMN_TOPIC_ID)),
-                                c.getString(c.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_DATETIME))));
-                    } while (c.moveToNext());
+                        allConferences.add(new Conference(mConferenceCursor.getString(mConferenceCursor.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_ID)),
+                                mConferenceCursor.getString(mConferenceCursor.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_NAME)),
+                                mConferenceCursor.getString(mConferenceCursor.getColumnIndex(Contract.ConfsEntry.COLUMN_TOPIC_ID)),
+                                mConferenceCursor.getString(mConferenceCursor.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_DATETIME))));
+                    } while (mConferenceCursor.moveToNext());
                     registerForContextMenu(mainListView);
                     //to open the context menu on one click
                     mainListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -128,21 +142,26 @@ public class ListViewFragment extends Fragment {
                         }
                     });
                 }
-
             } else if (getArguments().getInt(ARG_SECTION_NUMBER) == 2) { // topics
 
                 //Hide add button
                 fab.setVisibility(View.INVISIBLE);
 
-                Cursor cursor = DataProviderFunctions.getInstance().getTopics(getContext());
-                if (cursor.getCount() > 0) {
-                    cursor.moveToFirst();
-                    SimpleCursorAdapter c = new SimpleCursorAdapter(getContext(), android.R.layout.simple_list_item_2, cursor, new String[]{Contract.TopicEntry.COLUMN_TOPIC_TITLE, Contract.TopicEntry.COLUMN_DOC_ID}, new int[]{android.R.id.text1, android.R.id.text2}, 0);
+                topicsCursor = DataProviderFunctions.getInstance().getTopics(getContext());
+                if (topicsCursor.getCount() > 0) {
+                    topicsCursor.moveToFirst();
+                    SimpleCursorAdapter c = new SimpleCursorAdapter(getContext(), android.R.layout.simple_list_item_2, topicsCursor, new String[]{Contract.TopicEntry.COLUMN_TOPIC_TITLE, Contract.TopicEntry.COLUMN_DOC_ID}, new int[]{android.R.id.text1, android.R.id.text2}, 0);
                     c.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
                         @Override
                         public boolean setViewValue (View view, Cursor cursor, int columnIndex) {
                             if (view.getId() == android.R.id.text2) {
-                                ((TextView) view).setText((DataProviderFunctions.getInstance().getUserByID(cursor.getString(cursor.getColumnIndex(Contract.TopicEntry.COLUMN_DOC_ID)), getContext())).getUserEmail());
+                                User u = DataProviderFunctions.getInstance().getUserByID(cursor.getString(cursor.getColumnIndex(Contract.TopicEntry.COLUMN_DOC_ID)), getContext());
+                                if (u == null) {
+                                    ((TextView) view).setText(R.string.try_again);
+                                    ((TextView) view).setTextColor(Color.RED);
+                                } else {
+                                    ((TextView) view).setText((u).getUserEmail());
+                                }
                                 return true;
                             } else if (view.getId() == android.R.id.text1) {
                                 ((TextView) view).setTextSize(22);
@@ -183,13 +202,16 @@ public class ListViewFragment extends Fragment {
                                 return;
                             }
                             // ContentProvider to add the topic
-                            DataProviderFunctions.getInstance().AddTopic(mUser.getUserID(), topicText, getContext());
-                            //Refetch topics
-                            Cursor cursor = DataProviderFunctions.getInstance().getTopics(getContext());
-                            //Update adapter
-                            topicsAdapter.swapCursor(cursor);
-                            mainListView.setVisibility(View.VISIBLE);
-                            noElementsView.setVisibility(View.GONE);
+                            if (-1 != DataProviderFunctions.getInstance().AddTopic(mUser.getUserID(), topicText, getContext())) {
+                                //Refetch topics
+                                mTopicsCursor = DataProviderFunctions.getInstance().getTopics(getContext());
+                                //Update adapter
+                                topicsAdapter.swapCursor(mTopicsCursor);
+                                mainListView.setVisibility(View.VISIBLE);
+                                noElementsView.setVisibility(View.GONE);
+                            } else {
+                                Toast.makeText(getContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
+                            }
                         }
                     });
                     builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -215,7 +237,13 @@ public class ListViewFragment extends Fragment {
                     @Override
                     public boolean setViewValue (View view, Cursor cursor, int columnIndex) {
                         if (view.getId() == android.R.id.text2) {
-                            ((TextView) view).setText((DataProviderFunctions.getInstance().getUserByID(cursor.getString(cursor.getColumnIndex(Contract.TopicEntry.COLUMN_DOC_ID)), getContext())).getUserEmail());
+                            User u = (DataProviderFunctions.getInstance().getUserByID(cursor.getString(cursor.getColumnIndex(Contract.TopicEntry.COLUMN_DOC_ID)), getContext()));
+                            if (u == null) {
+                                ((TextView) view).setText(R.string.try_again);
+                                ((TextView) view).setTextColor(Color.RED);
+                            } else {
+                                ((TextView) view).setText(u.getUserEmail());
+                            }
                             return true;
                         } else if (view.getId() == android.R.id.text1) {
                             ((TextView) view).setTextSize(22);
@@ -236,18 +264,18 @@ public class ListViewFragment extends Fragment {
                 fab.setVisibility(View.INVISIBLE);
                 //Get invites
                 mInviteAdapter = new InviteAdapter(getContext(), null, 0);
-                Cursor cursor = DataProviderFunctions.getInstance().getInvitesByDocID(getContext(), mUser.getUserID());
+                mInvitesCursor = DataProviderFunctions.getInstance().getInvitesByDocID(getContext(), mUser.getUserID());
                 mainListView.setAdapter(mInviteAdapter);
-                if (cursor.getCount() > 0) {
-                    mInviteAdapter.swapCursor(cursor);
-                    cursor.moveToFirst();
+                if (mInvitesCursor.getCount() > 0) {
+                    mInviteAdapter.swapCursor(mInvitesCursor);
+                    mInvitesCursor.moveToFirst();
                     do {
-                        allInvites.add(new Invite(cursor.getString(cursor.getColumnIndex(Contract.InvitesEntry.COLUMN_INVITE_ID)),
-                                cursor.getString(cursor.getColumnIndex(Contract.InvitesEntry.COLUMN_CONF_ID)),
-                                cursor.getString(cursor.getColumnIndex(Contract.InvitesEntry.COLUMN_ADMIN_ID)),
-                                cursor.getString(cursor.getColumnIndex(Contract.InvitesEntry.COLUMN_DOC_ID)),
-                                cursor.getString(cursor.getColumnIndex(Contract.InvitesEntry.COLUMN_STATUS_ID))));
-                    } while (cursor.moveToNext());
+                        allInvites.add(new Invite(mInvitesCursor.getString(mInvitesCursor.getColumnIndex(Contract.InvitesEntry.COLUMN_INVITE_ID)),
+                                mInvitesCursor.getString(mInvitesCursor.getColumnIndex(Contract.InvitesEntry.COLUMN_CONF_ID)),
+                                mInvitesCursor.getString(mInvitesCursor.getColumnIndex(Contract.InvitesEntry.COLUMN_ADMIN_ID)),
+                                mInvitesCursor.getString(mInvitesCursor.getColumnIndex(Contract.InvitesEntry.COLUMN_DOC_ID)),
+                                mInvitesCursor.getString(mInvitesCursor.getColumnIndex(Contract.InvitesEntry.COLUMN_STATUS_ID))));
+                    } while (mInvitesCursor.moveToNext());
 
                     registerForContextMenu(mainListView);
                     //to open the context menu on one click
@@ -257,7 +285,6 @@ public class ListViewFragment extends Fragment {
                             getActivity().openContextMenu(view);
                         }
                     });
-
                 } else {
                     mainListView.setVisibility(View.GONE);
                     noElementsView.setVisibility(View.VISIBLE);
@@ -306,104 +333,116 @@ public class ListViewFragment extends Fragment {
                 startActivity(i);
                 getActivity().finish();
             } else if (item.getTitle().toString().equals(getResources().getString(R.string.delete))) {
-                DataProviderFunctions.getInstance().deleteConf(allConferences.get(listPosition).getId(), getContext());
-                //Update list view
-                Cursor c = DataProviderFunctions.getInstance().getConfs(getContext());
-                mConferenceAdapter.swapCursor(c);
-                mConferenceAdapter.notifyDataSetChanged();
-                allConferences.remove(listPosition);
-                if (allConferences.size() == 0) {
-                    mainListView.setVisibility(View.GONE);
-                    noElementsView.setVisibility(View.VISIBLE);
+                if (DataProviderFunctions.getInstance().deleteConf(allConferences.get(listPosition).getId(), getContext())) {
+                    //Update list view
+                    mConferenceCursor = DataProviderFunctions.getInstance().getConfs(getContext());
+                    mConferenceAdapter.swapCursor(mConferenceCursor);
+                    mConferenceAdapter.notifyDataSetChanged();
+                    allConferences.remove(listPosition);
+                    if (allConferences.size() == 0) {
+                        mainListView.setVisibility(View.GONE);
+                        noElementsView.setVisibility(View.VISIBLE);
+                    }
+                } else {
+                    Toast.makeText(getContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
                 }
             } else if (item.getTitle().toString().equals(getResources().getString(R.string.send_invites))) {
                 //Get all docotrs
-                final Cursor allDoctors = DataProviderFunctions.getInstance().getDoctors(getActivity());
-
-                AlertDialog.Builder builderSingle = new AlertDialog.Builder(getActivity());
-                //Array adapter for dialog list view
-                final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
-                        getContext(),
-                        android.R.layout.select_dialog_singlechoice) {
-                    // To fix the color and size of list text
-                    @Override
-                    public View getView (int position, View convertView, ViewGroup parent) {
-                        View view = super.getView(position, convertView, parent);
-                        TextView text1 = (TextView) view.findViewById(android.R.id.text1);
-                        text1.setTextColor(Color.BLACK);
-                        text1.setTextSize(getResources().getDimension(R.dimen.normal_font_size));
-                        return view;
-                    }
-                };
-                //Fill all doctors list
-                allDoctors.moveToFirst();
-                do {
-                    arrayAdapter.add(allDoctors.getString(allDoctors.getColumnIndex(Contract.UserEntry.COLUMN_USER_EMAIL)));
-                } while (allDoctors.moveToNext());
-                //Cancel button to dismiss
-                builderSingle.setNegativeButton(
-                        "cancel",
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick (DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        });
-                //Setting the adapter to dialog
-                builderSingle.setAdapter(
-                        arrayAdapter,
-                        new DialogInterface.OnClickListener() {
-                            @Override // What happens when user clicks doctor
-                            public void onClick (DialogInterface dialog, int which) {
-                                allDoctors.moveToPosition(which);
-                                // Insert invite with the selected doc id
-                                if (DataProviderFunctions.getInstance().AddInvite(allDoctors.getString(allDoctors.getColumnIndex(Contract.UserEntry.COLUMN_USER_ID)),
-                                        Utils.getUserDataFromSharedPreferences(getContext()).getUserID(),
-                                        allConferences.get(listPosition).getId(),
-                                        getContext()) != -1) {
-                                    Toast.makeText(getContext(), R.string.invite_sent, Toast.LENGTH_SHORT).show();
+                allDoctorsCursor = DataProviderFunctions.getInstance().getDoctors(getActivity());
+                if (allDoctorsCursor.getCount() > 0) {
+                    AlertDialog.Builder builderSingle = new AlertDialog.Builder(getActivity());
+                    //Array adapter for dialog list view
+                    final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
+                            getContext(),
+                            android.R.layout.select_dialog_singlechoice) {
+                        // To fix the color and size of list text
+                        @Override
+                        public View getView (int position, View convertView, ViewGroup parent) {
+                            View view = super.getView(position, convertView, parent);
+                            TextView text1 = (TextView) view.findViewById(android.R.id.text1);
+                            text1.setTextColor(Color.BLACK);
+                            text1.setTextSize(getResources().getDimension(R.dimen.normal_font_size));
+                            return view;
+                        }
+                    };
+                    //Fill all doctors list
+                    allDoctorsCursor.moveToFirst();
+                    do {
+                        arrayAdapter.add(allDoctorsCursor.getString(allDoctorsCursor.getColumnIndex(Contract.UserEntry.COLUMN_USER_EMAIL)));
+                    } while (allDoctorsCursor.moveToNext());
+                    //Cancel button to dismiss
+                    builderSingle.setNegativeButton(
+                            "cancel",
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick (DialogInterface dialog, int which) {
                                     dialog.dismiss();
                                 }
-                            }
-                        });
-                builderSingle.show();
+                            });
+                    //Setting the adapter to dialog
+                    builderSingle.setAdapter(
+                            arrayAdapter,
+                            new DialogInterface.OnClickListener() {
+                                @Override // What happens when user clicks doctor
+                                public void onClick (DialogInterface dialog, int which) {
+                                    allDoctorsCursor.moveToPosition(which);
+                                    // Insert invite with the selected doc id
+                                    if (DataProviderFunctions.getInstance().AddInvite(allDoctorsCursor.getString(allDoctorsCursor.getColumnIndex(Contract.UserEntry.COLUMN_USER_ID)),
+                                            Utils.getUserDataFromSharedPreferences(getContext()).getUserID(),
+                                            allConferences.get(listPosition).getId(),
+                                            getContext()) != -1) {
+                                        Toast.makeText(getContext(), R.string.invite_sent, Toast.LENGTH_SHORT).show();
+                                        dialog.dismiss();
+                                    } else {
+                                        Toast.makeText(getContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            });
+                    builderSingle.show();
+                }
             }
         } else if (mUser.getTypeID().equals(Contract.UserTypeEntry.USER_TYPE_USER_ID)) {
             if (item.getTitle().toString().equals(getResources().getString(R.string.accept))) {
-                DataProviderFunctions.getInstance().AcceptInvite(allInvites.get(listPosition).getId(), getContext());
-                Cursor c = DataProviderFunctions.getInstance().getInvitesByDocID(getContext(), mUser.getUserID());
-                mInviteAdapter.swapCursor(c);
-                allInvites.get(listPosition).setStatusID(Contract.InviteStatusEntry.INVITE_STATUS_ACCEPTED_ID);
+                if (DataProviderFunctions.getInstance().AcceptInvite(allInvites.get(listPosition).getId(), getContext())) {
+                    mInvitesCursor = DataProviderFunctions.getInstance().getInvitesByDocID(getContext(), mUser.getUserID());
+                    mInviteAdapter.swapCursor(mInvitesCursor);
+                    allInvites.get(listPosition).setStatusID(Contract.InviteStatusEntry.INVITE_STATUS_ACCEPTED_ID);
+                } else {
+                    Toast.makeText(getContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
+                }
             } else if (item.getTitle().toString().equals(getResources().getString(R.string.reject))) {
-                DataProviderFunctions.getInstance().RejectInvite(allInvites.get(listPosition).getId(), getContext());
-                Cursor c = DataProviderFunctions.getInstance().getInvitesByDocID(getContext(), mUser.getUserID());
-                mInviteAdapter.swapCursor(c);
-                allInvites.remove(listPosition);
-                if (allInvites.size() == 0) {
-                    mainListView.setVisibility(View.GONE);
-                    noElementsView.setVisibility(View.VISIBLE);
+                if (DataProviderFunctions.getInstance().RejectInvite(allInvites.get(listPosition).getId(), getContext())) {
+                    mInvitesCursor = DataProviderFunctions.getInstance().getInvitesByDocID(getContext(), mUser.getUserID());
+                    mInviteAdapter.swapCursor(mInvitesCursor);
+                    allInvites.remove(listPosition);
+                    if (allInvites.size() == 0) {
+                        mainListView.setVisibility(View.GONE);
+                        noElementsView.setVisibility(View.VISIBLE);
+                    }
+                } else {
+                    Toast.makeText(getContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
                 }
             } else if (item.getTitle().toString().equals(getResources().getString(R.string.add_to_calendar))) {
 
                 Calendar beginTime = Calendar.getInstance();
                 SimpleDateFormat dateFormatter = new SimpleDateFormat("MMM, dd yyyy  k:m", Locale.US);
                 //Get invite data
-                Cursor confCursor = DataProviderFunctions.getInstance().getConfByID(allInvites.get(listPosition).getConfID(), getContext());
-
-                try {
-                    beginTime.setTime(dateFormatter.parse(confCursor.getString(confCursor.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_DATETIME))));
-                } catch (ParseException e) {
-                    e.printStackTrace();
+                confCursor = DataProviderFunctions.getInstance().getConfByID(allInvites.get(listPosition).getConfID(), getContext());
+                if (confCursor.getCount() != 0) {
+                    try {
+                        beginTime.setTime(dateFormatter.parse(confCursor.getString(confCursor.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_DATETIME))));
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                    Intent intent = new Intent(Intent.ACTION_INSERT)
+                            .setData(CalendarContract.Events.CONTENT_URI)
+                            .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, beginTime.getTimeInMillis())
+                            .putExtra(CalendarContract.Events.TITLE, "Conference: " + confCursor.getString(confCursor.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_NAME)))
+                            .putExtra(CalendarContract.Events.DESCRIPTION, "Attend the medical conference which will discuss: " + DataProviderFunctions.getInstance().getTopicByID(confCursor.getString(confCursor.getColumnIndex(Contract.ConfsEntry.COLUMN_TOPIC_ID)), getContext()).getTitle())
+                            .putExtra(CalendarContract.Events.AVAILABILITY, CalendarContract.Events.AVAILABILITY_BUSY)
+                            .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    getActivity().startActivity(intent);
                 }
-                Intent intent = new Intent(Intent.ACTION_INSERT)
-                        .setData(CalendarContract.Events.CONTENT_URI)
-                        .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, beginTime.getTimeInMillis())
-                        .putExtra(CalendarContract.Events.TITLE, "Conference: " + confCursor.getString(confCursor.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_NAME)))
-                        .putExtra(CalendarContract.Events.DESCRIPTION, "Attend the medical conference which will discuss: " + DataProviderFunctions.getInstance().getTopicByID(confCursor.getString(confCursor.getColumnIndex(Contract.ConfsEntry.COLUMN_TOPIC_ID)), getContext()).getTitle())
-                        .putExtra(CalendarContract.Events.AVAILABILITY, CalendarContract.Events.AVAILABILITY_BUSY)
-                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                getActivity().startActivity(intent);
-
             }
         }
         return true;

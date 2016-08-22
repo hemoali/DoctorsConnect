@@ -127,13 +127,19 @@ public class AddConferenceActivity extends AppCompatActivity {
                     return;
                 }
                 if (getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_ID) != null) {
-                    DataProviderFunctions.getInstance().UpdateConf(getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_ID), confName, confDateTime, topic_id, getBaseContext());
-                    Toast.makeText(getApplicationContext(), R.string.conference_updated, Toast.LENGTH_SHORT).show();
-                    onBackPressed();
+                    if (DataProviderFunctions.getInstance().UpdateConf(getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_ID), confName, confDateTime, topic_id, getBaseContext())) {
+                        Toast.makeText(getApplicationContext(), R.string.conference_updated, Toast.LENGTH_SHORT).show();
+                        onBackPressed();
+                    } else {
+                        Toast.makeText(getApplicationContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
+                    }
                 } else {
-                    DataProviderFunctions.getInstance().AddConf(confName, confDateTime, topic_id, getApplicationContext());
-                    Toast.makeText(getApplicationContext(), R.string.conference_added_successfully, Toast.LENGTH_SHORT).show();
-                    onBackPressed();
+                    if (-1 != DataProviderFunctions.getInstance().AddConf(confName, confDateTime, topic_id, getApplicationContext())) {
+                        Toast.makeText(getApplicationContext(), R.string.conference_added_successfully, Toast.LENGTH_SHORT).show();
+                        onBackPressed();
+                    } else {
+                        Toast.makeText(getApplicationContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         });
@@ -178,7 +184,7 @@ public class AddConferenceActivity extends AppCompatActivity {
             noTopicsTV.setVisibility(View.VISIBLE);
             topicSpinner.setVisibility(View.GONE);
         }
-
+        topicsCursor.close();
     }
 
     /**

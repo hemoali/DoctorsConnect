@@ -142,6 +142,11 @@ public class DataProviderFunctions {
         return ContentUris.parseId(uri);
     }
 
+    /**
+     * Fetchs all topics from db
+     * @param context
+     * @return cursor points to all topics
+     */
     public Cursor getTopics (Context context) {
         CursorLoader cursorLoader = new CursorLoader(context, Contract.TopicEntry.CONTENT_URI_GET_TOPICS,
                 null, null, null, null);
