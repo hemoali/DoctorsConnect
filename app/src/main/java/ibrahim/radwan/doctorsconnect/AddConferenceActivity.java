@@ -4,6 +4,7 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Locale;
 
 import ibrahim.radwan.doctorsconnect.Models.Topic;
+import ibrahim.radwan.doctorsconnect.Utils.PermissionException;
 import ibrahim.radwan.doctorsconnect.adapters.TopicsSpinnerAdapter;
 import ibrahim.radwan.doctorsconnect.data.Contract;
 import ibrahim.radwan.doctorsconnect.data.DataProviderFunctions;
@@ -127,18 +129,31 @@ public class AddConferenceActivity extends AppCompatActivity {
                     return;
                 }
                 if (getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_ID) != null) {
-                    if (DataProviderFunctions.getInstance().UpdateConf(getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_ID), confName, confDateTime, topic_id, getBaseContext())) {
-                        Toast.makeText(getApplicationContext(), R.string.conference_updated, Toast.LENGTH_SHORT).show();
-                        onBackPressed();
-                    } else {
+                    try {
+                        if (DataProviderFunctions.getInstance().UpdateConf(getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_ID), confName, confDateTime, topic_id, getBaseContext())) {
+                            Toast.makeText(getApplicationContext(), R.string.conference_updated, Toast.LENGTH_SHORT).show();
+                            onBackPressed();
+                        } else {
+                            Toast.makeText(getApplicationContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (SQLiteConstraintException e) {
                         Toast.makeText(getApplicationContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
+                    } catch (PermissionException e) {
+                        Toast.makeText(getApplicationContext(), R.string.no_access, Toast.LENGTH_SHORT).show();
                     }
+
                 } else {
-                    if (-1 != DataProviderFunctions.getInstance().AddConf(confName, confDateTime, topic_id, getApplicationContext())) {
-                        Toast.makeText(getApplicationContext(), R.string.conference_added_successfully, Toast.LENGTH_SHORT).show();
-                        onBackPressed();
-                    } else {
+                    try {
+                        if (-1 != DataProviderFunctions.getInstance().AddConf(confName, confDateTime, topic_id, getApplicationContext())) {
+                            Toast.makeText(getApplicationContext(), R.string.conference_added_successfully, Toast.LENGTH_SHORT).show();
+                            onBackPressed();
+                        } else {
+                            Toast.makeText(getApplicationContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (SQLiteConstraintException e) {
                         Toast.makeText(getApplicationContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
+                    } catch (PermissionException e) {
+                        Toast.makeText(getApplicationContext(), R.string.no_access, Toast.LENGTH_SHORT).show();
                     }
                 }
             }

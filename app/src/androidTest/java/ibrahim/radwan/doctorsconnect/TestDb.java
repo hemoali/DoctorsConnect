@@ -9,7 +9,10 @@ import android.test.AndroidTestCase;
 
 import java.util.HashSet;
 
+import ibrahim.radwan.doctorsconnect.Models.User;
 import ibrahim.radwan.doctorsconnect.Utils.InvalidDoctorIDException;
+import ibrahim.radwan.doctorsconnect.Utils.PermissionException;
+import ibrahim.radwan.doctorsconnect.Utils.Utils;
 import ibrahim.radwan.doctorsconnect.data.Contract;
 import ibrahim.radwan.doctorsconnect.data.Database;
 
@@ -21,6 +24,7 @@ public class TestDb extends AndroidTestCase {
     protected void setUp () throws Exception {
         super.setUp();
         mContext.deleteDatabase(Contract.DATABASE_NAME);
+
     }
 
     public void testCreateDB () {
@@ -291,8 +295,9 @@ public class TestDb extends AndroidTestCase {
         values.put(Contract.UserEntry.COLUMN_USER_TYPE, "2");//user
         id = database.insertUser(values);
         assertFalse("Error inserting user", id == -1);
+        Utils.saveUserDataToSharedPreferences(new User(String.valueOf(id), "exADMIN@ex.com", null, "2"), getContext());
         //Fetch all Users
-        c = database.fetchDoctors();
+        c = database.fetchDoctors(Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
         c.moveToFirst();
         assertTrue("Error: cannot fetch doctor !!", c.getCount() == 1 && c.getString(c.getColumnIndex(Contract.UserEntry.COLUMN_USER_EMAIL)).equals("ex@ex.com"));
         c.close();
@@ -306,17 +311,8 @@ public class TestDb extends AndroidTestCase {
         SQLiteDatabase db = database.getWritableDatabase();
         assertEquals(true, db.isOpen());
 
-        // test insert invalid topic (invalid doctor id)
-        ContentValues values = new ContentValues();
-        values.put(Contract.TopicEntry.COLUMN_DOC_ID, 1);
-        values.put(Contract.TopicEntry.COLUMN_TOPIC_TITLE, "");
-        try {
-            long id = database.insertTopic(values);
-            fail("Error: invalid topic inserted: no such doctor");
-        } catch (SQLiteConstraintException | InvalidDoctorIDException e) {
-        }
         // Insert user to test inset null topic
-        values = new ContentValues();
+        ContentValues values = new ContentValues();
         values.put(Contract.UserEntry.COLUMN_USER_EMAIL, "ex@ex.com");
         values.put(Contract.UserEntry.COLUMN_USER_PASS, "exexex");
         values.put(Contract.UserEntry.COLUMN_USER_TYPE, "1");//user
@@ -326,25 +322,43 @@ public class TestDb extends AndroidTestCase {
             assertFalse("Error inserting user", user_id == -1);
         } catch (SQLiteConstraintException e) {
         }
+        Utils.saveUserDataToSharedPreferences(new User(String.valueOf(user_id), "ex@ex.com", "exexex", "1"), mContext);
+
+        // test insert invalid topic (invalid doctor id)
+        values = new ContentValues();
+        values.put(Contract.TopicEntry.COLUMN_DOC_ID, 55);
+        values.put(Contract.TopicEntry.COLUMN_TOPIC_TITLE, "");
+        try {
+            long id = database.insertTopic(values, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
+            fail("Error: invalid topic inserted: no such doctor");
+        } catch (SQLiteConstraintException | InvalidDoctorIDException e) {
+        } catch (PermissionException e) {
+            e.printStackTrace();
+        }
+
         values = new ContentValues();
         values.put(Contract.TopicEntry.COLUMN_DOC_ID, 1);
         values.putNull(Contract.TopicEntry.COLUMN_TOPIC_TITLE);
         try {
-            long id = database.insertTopic(values);
+            long id = database.insertTopic(values, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
             fail("Error: inserting null topic worked !!!");
         } catch (SQLiteConstraintException e) {
         } catch (SQLException e) {
         } catch (InvalidDoctorIDException e) {
+        } catch (PermissionException e) {
+            e.printStackTrace();
         }
         // Insert user to test inset good topic
         values = new ContentValues();
         values.put(Contract.TopicEntry.COLUMN_DOC_ID, 1);
         values.put(Contract.TopicEntry.COLUMN_TOPIC_TITLE, "aasd");
         try {
-            long id = database.insertTopic(values);
+            long id = database.insertTopic(values, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
             assertFalse("Error inserting topic", id == -1);
         } catch (SQLiteConstraintException | InvalidDoctorIDException e) {
             fail("Error inserting topic");
+        } catch (PermissionException e) {
+            e.printStackTrace();
         }
 
         // Fetch topic
@@ -356,7 +370,7 @@ public class TestDb extends AndroidTestCase {
         database.close();
     }
 
-    public void testConf () {
+    public void testConf () throws PermissionException {
         Database database = new Database(
                 this.mContext);
         SQLiteDatabase db = database.getWritableDatabase();
@@ -373,26 +387,43 @@ public class TestDb extends AndroidTestCase {
             assertFalse("Error inserting user", user_id == -1);
         } catch (SQLException e) {
         }
+        Utils.saveUserDataToSharedPreferences(new User(String.valueOf(user_id), "ex@ex.com", "exexex", "1"), mContext);
+
+
         // Insert topic to test inset good topic
         values = new ContentValues();
         values.put(Contract.TopicEntry.COLUMN_DOC_ID, 1);
         values.put(Contract.TopicEntry.COLUMN_TOPIC_TITLE, "aasd");
         try {
-            long id = database.insertTopic(values);
+            long id = database.insertTopic(values, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
             assertFalse("Error inserting topic", id == -1);
         } catch (SQLException | InvalidDoctorIDException e) {
             fail("Error inserting topic");
+        } catch (PermissionException e) {
+            e.printStackTrace();
         }
+
+        //Insert admin
+        values = new ContentValues();
+        values.put(Contract.UserEntry.COLUMN_USER_EMAIL, "exADMIN@ex.com");
+        values.put(Contract.UserEntry.COLUMN_USER_PASS, "exexex");
+        values.put(Contract.UserEntry.COLUMN_USER_TYPE, "2");//admin
+        long id = database.insertUser(values);
+        assertFalse("Error inserting admin", id == -1);
+        Utils.saveUserDataToSharedPreferences(new User(String.valueOf(id), "exADMIN@ex.com", "exexex", "2"), mContext);
+
         // Insert invalid topic-id-conf
         values = new ContentValues();
         values.put(Contract.ConfsEntry.COLUMN_CONF_DATETIME, "123124");
         values.put(Contract.ConfsEntry.COLUMN_CONF_NAME, "Conf1");
         values.put(Contract.ConfsEntry.COLUMN_TOPIC_ID, "3");
         try {
-            long id = database.insertConf(values);
+            id = database.insertConf(values, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
             fail("Error: inserting invalid topic-id-conf worked !!!");
         } catch (SQLiteConstraintException e) {
         } catch (SQLException e) {
+        } catch (PermissionException e) {
+            e.printStackTrace();
         }
         // test insert null conf
         values = new ContentValues();
@@ -400,9 +431,11 @@ public class TestDb extends AndroidTestCase {
         values.putNull(Contract.ConfsEntry.COLUMN_CONF_NAME);
         values.put(Contract.ConfsEntry.COLUMN_TOPIC_ID, "3");
         try {
-            long id = database.insertConf(values);
+            id = database.insertConf(values, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
             fail("Error: inserting invalid null-name-conf worked !!!");
         } catch (SQLException e) {
+        } catch (PermissionException e) {
+            e.printStackTrace();
         }
         // test insert null conf
         values = new ContentValues();
@@ -410,9 +443,11 @@ public class TestDb extends AndroidTestCase {
         values.put(Contract.ConfsEntry.COLUMN_CONF_NAME, "asd");
         values.put(Contract.ConfsEntry.COLUMN_TOPIC_ID, "3");
         try {
-            long id = database.insertConf(values);
+            id = database.insertConf(values, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
             fail("Error: inserting invalid null-datetime-conf worked !!!");
         } catch (SQLException e) {
+        } catch (PermissionException e) {
+            e.printStackTrace();
         }
         // test insert good conf
         values = new ContentValues();
@@ -420,10 +455,13 @@ public class TestDb extends AndroidTestCase {
         values.put(Contract.ConfsEntry.COLUMN_CONF_NAME, "asd");
         values.put(Contract.ConfsEntry.COLUMN_TOPIC_ID, "1");
         try {
-            long id = database.insertConf(values);
+            id = database.insertConf(values, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
             assertFalse("Error: cannot insert valid conf", id == -1);
         } catch (SQLException e) {
             fail("Error: cannot insert valid conf");
+            e.printStackTrace();
+        } catch (PermissionException e) {
+            e.printStackTrace();
         }
         // fetch confs
         Cursor c = database.fetchConfs();
@@ -438,7 +476,7 @@ public class TestDb extends AndroidTestCase {
         values.put(Contract.ConfsEntry.COLUMN_CONF_NAME, "dsa");
         values.put(Contract.ConfsEntry.COLUMN_TOPIC_ID, "1");
         //update conf
-        assertTrue("Error updating conf!", database.updateConf("1", values));
+        assertTrue("Error updating conf!", database.updateConf("1", values, Utils.getUserDataFromSharedPreferences(getContext()).getUserID()));
         // check if confs updated
         c = database.fetchConfs();
         assertTrue("Error, cannot fetch confs", c.moveToFirst() && c.getCount() == 1);
@@ -447,7 +485,7 @@ public class TestDb extends AndroidTestCase {
                 && c.getString(c.getColumnIndex(Contract.ConfsEntry.COLUMN_TOPIC_ID)).equals("1")
         );
         // delete conf
-        database.deleteConf("1");
+        database.deleteConf("1", Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
         c = database.fetchConfs();
         assertTrue("Error: cannot delete conf !!", c.getCount() == 0);
         db.close();
@@ -455,45 +493,55 @@ public class TestDb extends AndroidTestCase {
         c.close();
     }
 
-    public void testInvites () {
+    public void testInvites () throws PermissionException {
         Database database = new Database(
                 this.mContext);
         SQLiteDatabase db = database.getWritableDatabase();
         assertEquals(true, db.isOpen());
         //insert Doctor, topic, Admin for the invite
         ContentValues values = new ContentValues();
-        values.put(Contract.UserEntry.COLUMN_USER_EMAIL, "ex@ex.com");
-        values.put(Contract.UserEntry.COLUMN_USER_PASS, "exexex");
-        values.put(Contract.UserEntry.COLUMN_USER_TYPE, "1");//user
-        long id = database.insertUser(values);
-        assertFalse("Error inserting user", id == -1);
-
         values = new ContentValues();
         values.put(Contract.UserEntry.COLUMN_USER_EMAIL, "exADMIN@ex.com");
         values.put(Contract.UserEntry.COLUMN_USER_PASS, "exexex");
         values.put(Contract.UserEntry.COLUMN_USER_TYPE, "2");//admin
-        id = database.insertUser(values);
-        assertFalse("Error inserting user", id == -1);
+        long ADMINid = database.insertUser(values);
+        assertFalse("Error inserting user", ADMINid == -1);
+        Utils.saveUserDataToSharedPreferences(new User(String.valueOf(ADMINid), "exADMIN@ex.com", "exexex", "2"), mContext);
 
+        values.put(Contract.UserEntry.COLUMN_USER_EMAIL, "ex@ex.com");
+        values.put(Contract.UserEntry.COLUMN_USER_PASS, "exexex");
+        values.put(Contract.UserEntry.COLUMN_USER_TYPE, "1");//user
+        long USERid = database.insertUser(values);
+        assertFalse("Error inserting user", USERid == -1);
+        Utils.saveUserDataToSharedPreferences(new User(String.valueOf(USERid), "ex@ex.com", "exexex", "1"), mContext);
+
+        long id;
         values = new ContentValues();
-        values.put(Contract.TopicEntry.COLUMN_DOC_ID, 1);
+        values.put(Contract.TopicEntry.COLUMN_DOC_ID, USERid);
         values.put(Contract.TopicEntry.COLUMN_TOPIC_TITLE, "aasd");
         try {
-            id = database.insertTopic(values);
+            id = database.insertTopic(values, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
             assertFalse("Error inserting topic", id == -1);
         } catch (SQLException | InvalidDoctorIDException e) {
             fail("Error inserting topic");
+        } catch (PermissionException e) {
+            e.printStackTrace();
         }
+
+        Utils.saveUserDataToSharedPreferences(new User(String.valueOf(ADMINid), "exADMIN@ex.com", "exexex", "2"), mContext);
 
         values = new ContentValues();
         values.put(Contract.ConfsEntry.COLUMN_CONF_DATETIME, "123");
         values.put(Contract.ConfsEntry.COLUMN_CONF_NAME, "asd");
         values.put(Contract.ConfsEntry.COLUMN_TOPIC_ID, "1");
+        long ConfID = 0;
         try {
-            id = database.insertConf(values);
-            assertFalse("Error: cannot insert valid conf", id == -1);
+            ConfID = database.insertConf(values, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
+            assertFalse("Error: cannot insert valid conf", ConfID == -1);
         } catch (SQLException e) {
             fail("Error: cannot insert valid conf");
+        } catch (PermissionException e) {
+            e.printStackTrace();
         }
         // Insert invalid invite
         values = new ContentValues();
@@ -502,9 +550,11 @@ public class TestDb extends AndroidTestCase {
         values.put(Contract.InvitesEntry.COLUMN_CONF_ID, "3421");
         values.put(Contract.InvitesEntry.COLUMN_STATUS_ID, "34121");
         try {
-            id = database.insertInvite(values);
+            id = database.insertInvite(values, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
             fail("Error: inserting invalid invite worked !!!");
         } catch (SQLException | InvalidDoctorIDException e) {
+        } catch (PermissionException e) {
+            e.printStackTrace();
         }
 
         // Insert invalid invite
@@ -514,11 +564,13 @@ public class TestDb extends AndroidTestCase {
         values.put(Contract.InvitesEntry.COLUMN_CONF_ID, "3421");
         values.put(Contract.InvitesEntry.COLUMN_STATUS_ID, "34121");
         try {
-            id = database.insertInvite(values);
+            id = database.insertInvite(values, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
             fail("Error: inserting invalid invite worked !!!");
         } catch (SQLiteConstraintException e) {
 
         } catch (SQLException | InvalidDoctorIDException e) {
+        } catch (PermissionException e) {
+            e.printStackTrace();
         }
         // Insert invalid invite
         values = new ContentValues();
@@ -527,11 +579,13 @@ public class TestDb extends AndroidTestCase {
         values.put(Contract.InvitesEntry.COLUMN_CONF_ID, "3421");
         values.put(Contract.InvitesEntry.COLUMN_STATUS_ID, "34121");
         try {
-            id = database.insertInvite(values);
+            id = database.insertInvite(values, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
             fail("Error: inserting invalid invite worked !!!");
         } catch (SQLiteConstraintException e) {
 
         } catch (SQLException | InvalidDoctorIDException e) {
+        } catch (PermissionException e) {
+            e.printStackTrace();
         }
         // Insert invalid invite
         values = new ContentValues();
@@ -540,31 +594,37 @@ public class TestDb extends AndroidTestCase {
         values.put(Contract.InvitesEntry.COLUMN_CONF_ID, "1");
         values.put(Contract.InvitesEntry.COLUMN_STATUS_ID, "34121");
         try {
-            id = database.insertInvite(values);
+            id = database.insertInvite(values, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
             fail("Error: inserting invalid invite worked !!!");
         } catch (SQLException | InvalidDoctorIDException e) {
+        } catch (PermissionException e) {
+            e.printStackTrace();
         }
         // Insert valid invite
         values = new ContentValues();
-        values.put(Contract.InvitesEntry.COLUMN_DOC_ID, "1");
-        values.put(Contract.InvitesEntry.COLUMN_ADMIN_ID, "2");
-        values.put(Contract.InvitesEntry.COLUMN_CONF_ID, "1");
+        values.put(Contract.InvitesEntry.COLUMN_DOC_ID, USERid);
+        values.put(Contract.InvitesEntry.COLUMN_ADMIN_ID, ADMINid);
+        values.put(Contract.InvitesEntry.COLUMN_CONF_ID, ConfID);
         values.put(Contract.InvitesEntry.COLUMN_STATUS_ID, Contract.InviteStatusEntry.INVITE_STATUS_PENDING_ID);
         try {
-            id = database.insertInvite(values);
-            assertFalse("Error: cannot insert valid conf", id == -1);
+            id = database.insertInvite(values, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
+            assertFalse("Error: cannot insert valid invite", id == -1);
         } catch (SQLException | InvalidDoctorIDException e) {
-            fail("Error: cannot insert valid conf");
+            fail("Error: cannot insert valid invite");
+        } catch (PermissionException e) {
+            e.printStackTrace();
         }
+        Utils.saveUserDataToSharedPreferences(new User(String.valueOf(USERid), "ex@ex.com", "exexex", "1"), mContext);
+
         //accept Invite
-        assertTrue(database.acceptInvite("1"));
+        assertTrue(database.acceptInvite("1", Utils.getUserDataFromSharedPreferences(getContext()).getUserID()));
         //reject Invite
-        assertTrue(database.rejectInvite("1"));
+        assertTrue(database.rejectInvite("1", Utils.getUserDataFromSharedPreferences(getContext()).getUserID()));
 
         //Check if updated to rejected
         values = new ContentValues();
         values.put(Contract.InvitesEntry.COLUMN_DOC_ID, "1");
-        Cursor c = database.fetchInvites(values);
+        Cursor c = database.fetchInvites(values, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
         c.moveToFirst();
         assertFalse("Error, the invite isn't updated as expected!!", c.getCount() > 0);
         c.close();

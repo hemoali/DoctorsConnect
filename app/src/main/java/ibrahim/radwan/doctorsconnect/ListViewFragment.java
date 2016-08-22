@@ -3,6 +3,7 @@ package ibrahim.radwan.doctorsconnect;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.provider.CalendarContract;
@@ -33,6 +34,7 @@ import java.util.Locale;
 import ibrahim.radwan.doctorsconnect.Models.Conference;
 import ibrahim.radwan.doctorsconnect.Models.Invite;
 import ibrahim.radwan.doctorsconnect.Models.User;
+import ibrahim.radwan.doctorsconnect.Utils.PermissionException;
 import ibrahim.radwan.doctorsconnect.Utils.Utils;
 import ibrahim.radwan.doctorsconnect.adapters.ConferenceAdapter;
 import ibrahim.radwan.doctorsconnect.adapters.InviteAdapter;
@@ -202,15 +204,21 @@ public class ListViewFragment extends Fragment {
                                 return;
                             }
                             // ContentProvider to add the topic
-                            if (-1 != DataProviderFunctions.getInstance().AddTopic(mUser.getUserID(), topicText, getContext())) {
-                                //Refetch topics
-                                mTopicsCursor = DataProviderFunctions.getInstance().getTopics(getContext());
-                                //Update adapter
-                                topicsAdapter.swapCursor(mTopicsCursor);
-                                mainListView.setVisibility(View.VISIBLE);
-                                noElementsView.setVisibility(View.GONE);
-                            } else {
+                            try {
+                                if (-1 != DataProviderFunctions.getInstance().AddTopic(mUser.getUserID(), topicText, getContext())) {
+                                    //Refetch topics
+                                    mTopicsCursor = DataProviderFunctions.getInstance().getTopics(getContext());
+                                    //Update adapter
+                                    topicsAdapter.swapCursor(mTopicsCursor);
+                                    mainListView.setVisibility(View.VISIBLE);
+                                    noElementsView.setVisibility(View.GONE);
+                                } else {
+                                    Toast.makeText(getContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
+                                }
+                            } catch (SQLiteConstraintException e) {
                                 Toast.makeText(getContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
+                            } catch (PermissionException e) {
+                                Toast.makeText(getContext(), R.string.no_access, Toast.LENGTH_SHORT).show();
                             }
                         }
                     });
@@ -264,9 +272,13 @@ public class ListViewFragment extends Fragment {
                 fab.setVisibility(View.INVISIBLE);
                 //Get invites
                 mInviteAdapter = new InviteAdapter(getContext(), null, 0);
-                mInvitesCursor = DataProviderFunctions.getInstance().getInvitesByDocID(getContext(), mUser.getUserID());
+                try {
+                    mInvitesCursor = DataProviderFunctions.getInstance().getInvitesByDocID(getContext(), mUser.getUserID());
+                } catch (PermissionException e) {
+                    Toast.makeText(getContext(), R.string.no_access, Toast.LENGTH_SHORT).show();
+                }
                 mainListView.setAdapter(mInviteAdapter);
-                if (mInvitesCursor.getCount() > 0) {
+                if (mInvitesCursor!= null && mInvitesCursor.getCount() > 0) {
                     mInviteAdapter.swapCursor(mInvitesCursor);
                     mInvitesCursor.moveToFirst();
                     do {
@@ -333,23 +345,31 @@ public class ListViewFragment extends Fragment {
                 startActivity(i);
                 getActivity().finish();
             } else if (item.getTitle().toString().equals(getResources().getString(R.string.delete))) {
-                if (DataProviderFunctions.getInstance().deleteConf(allConferences.get(listPosition).getId(), getContext())) {
-                    //Update list view
-                    mConferenceCursor = DataProviderFunctions.getInstance().getConfs(getContext());
-                    mConferenceAdapter.swapCursor(mConferenceCursor);
-                    mConferenceAdapter.notifyDataSetChanged();
-                    allConferences.remove(listPosition);
-                    if (allConferences.size() == 0) {
-                        mainListView.setVisibility(View.GONE);
-                        noElementsView.setVisibility(View.VISIBLE);
+                try {
+                    if (DataProviderFunctions.getInstance().deleteConf(allConferences.get(listPosition).getId(), getContext())) {
+                        //Update list view
+                        mConferenceCursor = DataProviderFunctions.getInstance().getConfs(getContext());
+                        mConferenceAdapter.swapCursor(mConferenceCursor);
+                        mConferenceAdapter.notifyDataSetChanged();
+                        allConferences.remove(listPosition);
+                        if (allConferences.size() == 0) {
+                            mainListView.setVisibility(View.GONE);
+                            noElementsView.setVisibility(View.VISIBLE);
+                        }
+                    } else {
+                        Toast.makeText(getContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
                     }
-                } else {
-                    Toast.makeText(getContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
+                } catch (PermissionException e) {
+                    Toast.makeText(getContext(), R.string.no_access, Toast.LENGTH_SHORT).show();
                 }
             } else if (item.getTitle().toString().equals(getResources().getString(R.string.send_invites))) {
                 //Get all docotrs
-                allDoctorsCursor = DataProviderFunctions.getInstance().getDoctors(getActivity());
-                if (allDoctorsCursor.getCount() > 0) {
+                try {
+                    allDoctorsCursor = DataProviderFunctions.getInstance().getDoctors(getActivity());
+                } catch (PermissionException e) {
+                    Toast.makeText(getContext(), R.string.no_access, Toast.LENGTH_SHORT).show();
+                }
+                if (allDoctorsCursor!= null && allDoctorsCursor.getCount() > 0) {
                     AlertDialog.Builder builderSingle = new AlertDialog.Builder(getActivity());
                     //Array adapter for dialog list view
                     final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
@@ -387,14 +407,20 @@ public class ListViewFragment extends Fragment {
                                 public void onClick (DialogInterface dialog, int which) {
                                     allDoctorsCursor.moveToPosition(which);
                                     // Insert invite with the selected doc id
-                                    if (DataProviderFunctions.getInstance().AddInvite(allDoctorsCursor.getString(allDoctorsCursor.getColumnIndex(Contract.UserEntry.COLUMN_USER_ID)),
-                                            Utils.getUserDataFromSharedPreferences(getContext()).getUserID(),
-                                            allConferences.get(listPosition).getId(),
-                                            getContext()) != -1) {
-                                        Toast.makeText(getContext(), R.string.invite_sent, Toast.LENGTH_SHORT).show();
-                                        dialog.dismiss();
-                                    } else {
+                                    try {
+                                        if (DataProviderFunctions.getInstance().AddInvite(allDoctorsCursor.getString(allDoctorsCursor.getColumnIndex(Contract.UserEntry.COLUMN_USER_ID)),
+                                                Utils.getUserDataFromSharedPreferences(getContext()).getUserID(),
+                                                allConferences.get(listPosition).getId(),
+                                                getContext()) != -1) {
+                                            Toast.makeText(getContext(), R.string.invite_sent, Toast.LENGTH_SHORT).show();
+                                            dialog.dismiss();
+                                        } else {
+                                            Toast.makeText(getContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
+                                        }
+                                    } catch (SQLiteConstraintException e) {
                                         Toast.makeText(getContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
+                                    } catch (PermissionException e) {
+                                        Toast.makeText(getContext(), R.string.no_access, Toast.LENGTH_SHORT).show();
                                     }
                                 }
                             });
@@ -403,24 +429,32 @@ public class ListViewFragment extends Fragment {
             }
         } else if (mUser.getTypeID().equals(Contract.UserTypeEntry.USER_TYPE_USER_ID)) {
             if (item.getTitle().toString().equals(getResources().getString(R.string.accept))) {
-                if (DataProviderFunctions.getInstance().AcceptInvite(allInvites.get(listPosition).getId(), getContext())) {
-                    mInvitesCursor = DataProviderFunctions.getInstance().getInvitesByDocID(getContext(), mUser.getUserID());
-                    mInviteAdapter.swapCursor(mInvitesCursor);
-                    allInvites.get(listPosition).setStatusID(Contract.InviteStatusEntry.INVITE_STATUS_ACCEPTED_ID);
-                } else {
-                    Toast.makeText(getContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
+                try {
+                    if (DataProviderFunctions.getInstance().AcceptInvite(allInvites.get(listPosition).getId(), getContext())) {
+                        mInvitesCursor = DataProviderFunctions.getInstance().getInvitesByDocID(getContext(), mUser.getUserID());
+                        mInviteAdapter.swapCursor(mInvitesCursor);
+                        allInvites.get(listPosition).setStatusID(Contract.InviteStatusEntry.INVITE_STATUS_ACCEPTED_ID);
+                    } else {
+                        Toast.makeText(getContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
+                    }
+                } catch (PermissionException e) {
+                    Toast.makeText(getContext(), R.string.no_access, Toast.LENGTH_SHORT).show();
                 }
             } else if (item.getTitle().toString().equals(getResources().getString(R.string.reject))) {
-                if (DataProviderFunctions.getInstance().RejectInvite(allInvites.get(listPosition).getId(), getContext())) {
-                    mInvitesCursor = DataProviderFunctions.getInstance().getInvitesByDocID(getContext(), mUser.getUserID());
-                    mInviteAdapter.swapCursor(mInvitesCursor);
-                    allInvites.remove(listPosition);
-                    if (allInvites.size() == 0) {
-                        mainListView.setVisibility(View.GONE);
-                        noElementsView.setVisibility(View.VISIBLE);
+                try {
+                    if (DataProviderFunctions.getInstance().RejectInvite(allInvites.get(listPosition).getId(), getContext())) {
+                        mInvitesCursor = DataProviderFunctions.getInstance().getInvitesByDocID(getContext(), mUser.getUserID());
+                        mInviteAdapter.swapCursor(mInvitesCursor);
+                        allInvites.remove(listPosition);
+                        if (allInvites.size() == 0) {
+                            mainListView.setVisibility(View.GONE);
+                            noElementsView.setVisibility(View.VISIBLE);
+                        }
+                    } else {
+                        Toast.makeText(getContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
                     }
-                } else {
-                    Toast.makeText(getContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
+                } catch (PermissionException e) {
+                    Toast.makeText(getContext(), R.string.no_access, Toast.LENGTH_SHORT).show();
                 }
             } else if (item.getTitle().toString().equals(getResources().getString(R.string.add_to_calendar))) {
 

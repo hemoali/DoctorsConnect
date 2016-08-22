@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Looper;
@@ -225,12 +226,16 @@ public class LoginActivity extends AppCompatActivity {
                 if (emailCursor != null) emailCursor.close();
                 u = dataProviderFunctions.userLogin(mEmail, mPassword, getApplicationContext());
             } else if (Signup) {
-                u = dataProviderFunctions.AddUser(mEmail, mPassword, String.valueOf(mUserType), getApplicationContext());
-                runOnUiThread(new Runnable() {
-                    public void run () {
-                        Toast.makeText(getApplicationContext(), R.string.sign_up_completed, Toast.LENGTH_SHORT).show();
-                    }
-                });
+                try {
+                    u = dataProviderFunctions.AddUser(mEmail, mPassword, String.valueOf(mUserType), getApplicationContext());
+                    runOnUiThread(new Runnable() {
+                        public void run () {
+                            Toast.makeText(getApplicationContext(), R.string.sign_up_completed, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } catch (SQLiteConstraintException e) {
+                    Toast.makeText(getApplicationContext(), R.string.try_again, Toast.LENGTH_SHORT).show();
+                }
             }
             if (emailCursor != null) emailCursor.close();
             return u;

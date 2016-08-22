@@ -11,6 +11,7 @@ import android.database.sqlite.SQLiteQueryBuilder;
 
 import ibrahim.radwan.doctorsconnect.Utils.BCrypt;
 import ibrahim.radwan.doctorsconnect.Utils.InvalidDoctorIDException;
+import ibrahim.radwan.doctorsconnect.Utils.PermissionException;
 
 /**
  * Created by ibrahimradwan on 8/20/16.
@@ -153,19 +154,23 @@ public class Database extends SQLiteOpenHelper {
     }
 
     /**
+     * @param currentUserID: current signed in user
      * @return All doctors
      */
-    public Cursor fetchDoctors () {
-        SQLiteQueryBuilder sqliteQueryBuilder = new SQLiteQueryBuilder();
-        sqliteQueryBuilder.setTables(Contract.UserEntry.TABLE_USERS);
-        Cursor cursor = sqliteQueryBuilder.query(getReadableDatabase(),
-                null,
-                Contract.UserEntry.COLUMN_USER_TYPE + " = ?",
-                new String[]{Contract.UserTypeEntry.USER_TYPE_USER_ID},
-                null,
-                null,
-                "");
-        return cursor;
+    public Cursor fetchDoctors (String currentUserID) throws PermissionException {
+        if (checkUserType(currentUserID).equals(Contract.UserTypeEntry.USER_TYPE_ADMIN_ID)) {
+            SQLiteQueryBuilder sqliteQueryBuilder = new SQLiteQueryBuilder();
+            sqliteQueryBuilder.setTables(Contract.UserEntry.TABLE_USERS);
+            Cursor cursor = sqliteQueryBuilder.query(getReadableDatabase(),
+                    null,
+                    Contract.UserEntry.COLUMN_USER_TYPE + " = ?",
+                    new String[]{Contract.UserTypeEntry.USER_TYPE_USER_ID},
+                    null,
+                    null,
+                    "");
+            return cursor;
+        }
+        throw new PermissionException("You cannot access this functionality!");
     }
 
     /**
@@ -210,7 +215,7 @@ public class Database extends SQLiteOpenHelper {
                 return Contract.UserTypeEntry.USER_TYPE_ADMIN_ID;
             }
         }
-        return null;
+        return "";
     }
 
     /**
@@ -234,19 +239,25 @@ public class Database extends SQLiteOpenHelper {
     }
 
     /**
-     * @param values (doctor_id, title)
-     * @return topic_id
-     * @throws Throwable
+     * @param values        (doctor_id, title)
+     * @param currentUserID the user currently signed in
+     * @return
+     * @throws SQLException
+     * @throws InvalidDoctorIDException (The doctor id doesn't exist)
+     * @throws PermissionException      (the current user cannot perform this action)
      */
-    public long insertTopic (ContentValues values) throws SQLException, InvalidDoctorIDException {
-        if (checkUserType(values.getAsString(Contract.TopicEntry.COLUMN_DOC_ID)) != Contract.UserTypeEntry.USER_TYPE_USER_ID) {
-            throw new InvalidDoctorIDException("The ID doesn't belong to doctor");
+    public long insertTopic (ContentValues values, String currentUserID) throws SQLException, InvalidDoctorIDException, PermissionException {
+        if (checkUserType(currentUserID).equals(Contract.UserTypeEntry.USER_TYPE_USER_ID)) {
+            if (checkUserType(values.getAsString(Contract.TopicEntry.COLUMN_DOC_ID)) != Contract.UserTypeEntry.USER_TYPE_USER_ID) {
+                throw new InvalidDoctorIDException("The ID doesn't belong to doctor");
+            }
+            long topic_id = getWritableDatabase().insert(Contract.TopicEntry.TABLE_TOPICS, "", values);
+            if (topic_id <= 0) {
+                throw new SQLException("Failed to add new topic");
+            }
+            return topic_id;
         }
-        long topic_id = getWritableDatabase().insert(Contract.TopicEntry.TABLE_TOPICS, "", values);
-        if (topic_id <= 0) {
-            throw new SQLException("Failed to add new topic");
-        }
-        return topic_id;
+        throw new PermissionException("You cannot access this functionailty!");
     }
 
     /**
@@ -282,16 +293,21 @@ public class Database extends SQLiteOpenHelper {
     }
 
     /**
-     * @param values (conf name, time, topic_id)
-     * @return conf id
-     * @throws SQLException
+     * @param values        (conf name, time, topic_id)
+     * @param currentUserID
+     * @return new conference ID
+     * @throws SQLException        when failing to add the conference
+     * @throws PermissionException when normal user tries to add conference
      */
-    public long insertConf (ContentValues values) throws SQLException {
-        long conf_id = getWritableDatabase().insert(Contract.ConfsEntry.TABLE_CONFS, "", values);
-        if (conf_id <= 0) {
-            throw new SQLException("Failed to add new conf");
+    public long insertConf (ContentValues values, String currentUserID) throws SQLException, PermissionException {
+        if (checkUserType(currentUserID).equals(Contract.UserTypeEntry.USER_TYPE_ADMIN_ID)) {
+            long conf_id = getWritableDatabase().insert(Contract.ConfsEntry.TABLE_CONFS, "", values);
+            if (conf_id <= 0) {
+                throw new SQLException("Failed to add new conf");
+            }
+            return conf_id;
         }
-        return conf_id;
+        throw new PermissionException("You cannot access this functionality!");
     }
 
     /**
@@ -330,95 +346,135 @@ public class Database extends SQLiteOpenHelper {
      * updates conf values
      *
      * @param id
-     * @param values (datetime, topic_id, name)
+     * @param values        (datetime, topic_id, name)
+     * @param currentUserID currently signed in user
      * @return true if updated
+     * @throws PermissionException when doctor tries to update conf
      */
-    public boolean updateConf (String id, ContentValues values) {
-        if (id != null) {
-            return (getWritableDatabase().update(Contract.ConfsEntry.TABLE_CONFS, values, Contract.ConfsEntry.COLUMN_CONF_ID + "=?", new String[]{id}) == 1);
+    public boolean updateConf (String id, ContentValues values, String currentUserID) throws PermissionException {
+        if (checkUserType(currentUserID).equals(Contract.UserTypeEntry.USER_TYPE_ADMIN_ID)) {
+
+            if (id != null) {
+                return (getWritableDatabase().update(Contract.ConfsEntry.TABLE_CONFS, values, Contract.ConfsEntry.COLUMN_CONF_ID + "=?", new String[]{id}) == 1);
+            }
+            return false;
+        } else {
+            throw new PermissionException("You cannot access this functionality!");
         }
-        return false;
     }
 
     /**
      * Deletes conf by id
      *
-     * @param id : conf id
+     * @param currentUserID currently signed in user
+     * @param id            : conf id
      * @return true if deleted
+     * @throws PermissionException when doctor tries to update conf
      */
-    public boolean deleteConf (String id) {
-        boolean deleted = false;
-        if (id != null) {
-            //First delete invites
-            deleteInvitesByConfID(id);
-            try {
-                deleted = (getWritableDatabase().delete(Contract.ConfsEntry.TABLE_CONFS, Contract.ConfsEntry.COLUMN_CONF_ID + "=?", new String[]{id}) == 1);
-            } catch (SQLiteConstraintException e) {
+    public boolean deleteConf (String id, String currentUserID) throws PermissionException {
+        if (checkUserType(currentUserID).equals(Contract.UserTypeEntry.USER_TYPE_ADMIN_ID)) {
+
+            boolean deleted = false;
+            if (id != null) {
+                //First delete invites
+                deleteInvitesByConfID(id);
+                try {
+                    deleted = (getWritableDatabase().delete(Contract.ConfsEntry.TABLE_CONFS, Contract.ConfsEntry.COLUMN_CONF_ID + "=?", new String[]{id}) == 1);
+                } catch (SQLiteConstraintException e) {
+                }
             }
+            return deleted;
+        } else {
+            throw new PermissionException("You cannot access this functionality!");
         }
-        return deleted;
     }
 
     /**
-     * @param values (conf_id, Admin_id, Doc_id, status_id)
+     * @param values        (conf_id, Admin_id, Doc_id, status_id)
+     * @param currentUserID currently signed in user
      * @return invite id
      * @throws SQLException
+     * @throws PermissionException when doctor tries to update conf
      */
-    public long insertInvite (ContentValues values) throws SQLException, InvalidDoctorIDException {
-        if (checkUserType(values.getAsString(Contract.TopicEntry.COLUMN_DOC_ID)) != Contract.UserTypeEntry.USER_TYPE_USER_ID) {
-            throw new InvalidDoctorIDException("The ID doesn't belong to doctor");
+    public long insertInvite (ContentValues values, String currentUserID) throws SQLException, InvalidDoctorIDException, PermissionException {
+        if (checkUserType(currentUserID).equals(Contract.UserTypeEntry.USER_TYPE_ADMIN_ID)) {
+
+            if (checkUserType(values.getAsString(Contract.TopicEntry.COLUMN_DOC_ID)) != Contract.UserTypeEntry.USER_TYPE_USER_ID) {
+                throw new InvalidDoctorIDException("The ID doesn't belong to doctor");
+            }
+            long invite_id = getWritableDatabase().insert(Contract.InvitesEntry.TABLE_INVITES, "", values);
+            if (invite_id <= 0) {
+                throw new SQLException("Failed to add new invite");
+            }
+            return invite_id;
+        } else {
+            throw new PermissionException("You cannot access this functionality!");
         }
-        long invite_id = getWritableDatabase().insert(Contract.InvitesEntry.TABLE_INVITES, "", values);
-        if (invite_id <= 0) {
-            throw new SQLException("Failed to add new invite");
-        }
-        return invite_id;
     }
 
     /**
      * Accepts the invite
      *
-     * @param id : invite id
+     * @param id            : invite id
+     * @param currentUserID currently signed in user
      * @return
+     * @throws PermissionException when admin tries to accept invite
      */
-    public boolean acceptInvite (String id) {
-        if (id != null) {
-            ContentValues values = new ContentValues();
-            values.put(Contract.InvitesEntry.COLUMN_STATUS_ID, Contract.InviteStatusEntry.INVITE_STATUS_ACCEPTED_ID);
-            return (getWritableDatabase().update(Contract.InvitesEntry.TABLE_INVITES, values, Contract.InvitesEntry.COLUMN_INVITE_ID + "=?", new String[]{id}) == 1);
+    public boolean acceptInvite (String id, String currentUserID) throws PermissionException {
+        if (checkUserType(currentUserID).equals(Contract.UserTypeEntry.USER_TYPE_USER_ID)) {
+            if (id != null) {
+                ContentValues values = new ContentValues();
+                values.put(Contract.InvitesEntry.COLUMN_STATUS_ID, Contract.InviteStatusEntry.INVITE_STATUS_ACCEPTED_ID);
+                return (getWritableDatabase().update(Contract.InvitesEntry.TABLE_INVITES, values, Contract.InvitesEntry.COLUMN_INVITE_ID + "=?", new String[]{id}) == 1);
+            }
+            return false;
+        } else {
+            throw new PermissionException("You cannot access this functionality!");
         }
-        return false;
     }
 
     /**
      * Rejects the invite
      *
-     * @param id : invite id
+     * @param id            : invite id
+     * @param currentUserID currently signed in user
      * @return
+     * @throws PermissionException when admin tries to reject invite
      */
-    public boolean rejectInvite (String id) {
-        if (id != null) {
-            ContentValues values = new ContentValues();
-            values.put(Contract.InvitesEntry.COLUMN_STATUS_ID, Contract.InviteStatusEntry.INVITE_STATUS_REJECTED_ID);
-            return (getWritableDatabase().update(Contract.InvitesEntry.TABLE_INVITES, values, Contract.InvitesEntry.COLUMN_INVITE_ID + "=?", new String[]{id}) == 1);
+    public boolean rejectInvite (String id, String currentUserID) throws PermissionException {
+        if (checkUserType(currentUserID).equals(Contract.UserTypeEntry.USER_TYPE_USER_ID)) {
+            if (id != null) {
+                ContentValues values = new ContentValues();
+                values.put(Contract.InvitesEntry.COLUMN_STATUS_ID, Contract.InviteStatusEntry.INVITE_STATUS_REJECTED_ID);
+                return (getWritableDatabase().update(Contract.InvitesEntry.TABLE_INVITES, values, Contract.InvitesEntry.COLUMN_INVITE_ID + "=?", new String[]{id}) == 1);
+            }
+            return false;
+        } else {
+            throw new PermissionException("You cannot access this functionality!");
         }
-        return false;
+
     }
 
     /**
+     * @param currentUserID currently signed in user
      * @return All invites
+     * @throws PermissionException when admin tries to fetch invites
      */
-    public Cursor fetchInvites (ContentValues values) {
-        SQLiteQueryBuilder sqliteQueryBuilder = new SQLiteQueryBuilder();
-        sqliteQueryBuilder.setTables(Contract.InvitesEntry.TABLE_INVITES);
-        Cursor cursor = sqliteQueryBuilder.query(getReadableDatabase(),
-                null,
-                Contract.InvitesEntry.COLUMN_DOC_ID + " = ? AND " + Contract.InvitesEntry.COLUMN_STATUS_ID + " != ?",
-                new String[]{values.getAsString(Contract.InvitesEntry.COLUMN_DOC_ID), Contract.InviteStatusEntry.INVITE_STATUS_REJECTED_ID},
-                null,
-                null,
-                Contract.InvitesEntry.COLUMN_INVITE_ID + " DESC");
-        return cursor;
+    public Cursor fetchInvites (ContentValues values, String currentUserID) throws PermissionException {
+        if (checkUserType(currentUserID).equals(Contract.UserTypeEntry.USER_TYPE_USER_ID)) {
+            SQLiteQueryBuilder sqliteQueryBuilder = new SQLiteQueryBuilder();
+            sqliteQueryBuilder.setTables(Contract.InvitesEntry.TABLE_INVITES);
+            Cursor cursor = sqliteQueryBuilder.query(getReadableDatabase(),
+                    null,
+                    Contract.InvitesEntry.COLUMN_DOC_ID + " = ? AND " + Contract.InvitesEntry.COLUMN_STATUS_ID + " != ?",
+                    new String[]{values.getAsString(Contract.InvitesEntry.COLUMN_DOC_ID), Contract.InviteStatusEntry.INVITE_STATUS_REJECTED_ID},
+                    null,
+                    null,
+                    Contract.InvitesEntry.COLUMN_INVITE_ID + " DESC");
+            return cursor;
+        } else {
+            throw new PermissionException("You cannot access this functionality!");
+        }
     }
 
     /**

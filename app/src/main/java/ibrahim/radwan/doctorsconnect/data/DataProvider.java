@@ -9,6 +9,9 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.support.annotation.Nullable;
 
+import ibrahim.radwan.doctorsconnect.Utils.PermissionException;
+import ibrahim.radwan.doctorsconnect.Utils.Utils;
+
 /**
  * Created by ibrahimradwan on 8/20/16.
  */
@@ -77,7 +80,11 @@ public class DataProvider extends ContentProvider {
     @Override
     public Cursor query (Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         if (uriMatcher.match(uri) == GET_USERS) {
-            return database.fetchDoctors();
+            try {
+                return database.fetchDoctors(Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
+            } catch (PermissionException e) {
+                e.printStackTrace();
+            }
         } else if (uriMatcher.match(uri) == LOGIN_USER) {
             ContentValues values = new ContentValues();
             values.put(Contract.UserEntry.COLUMN_USER_EMAIL, selectionArgs[0]);
@@ -90,7 +97,11 @@ public class DataProvider extends ContentProvider {
         } else if (uriMatcher.match(uri) == GET_INVITES) {
             ContentValues values = new ContentValues();
             values.put(Contract.InvitesEntry.COLUMN_DOC_ID, uri.getPathSegments().get(2));
-            return database.fetchInvites(values);
+            try {
+                return database.fetchInvites(values, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
+            } catch (PermissionException e) {
+                e.printStackTrace();
+            }
         } else if (uriMatcher.match(uri) == GET_CONFS) {
             return database.fetchConfs();
         } else if (uriMatcher.match(uri) == GET_TOPICS) {
@@ -118,13 +129,13 @@ public class DataProvider extends ContentProvider {
                 long id = database.insertUser(contentValues);
                 returnUri = ContentUris.withAppendedId(Contract.UserEntry.CONTENT_URI_SIGNUP, id);
             } else if (uriMatcher.match(uri) == ADD_INVITE) {
-                long id = database.insertInvite(contentValues);
+                long id = database.insertInvite(contentValues, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
                 returnUri = ContentUris.withAppendedId(Contract.InvitesEntry.CONTENT_URI_ADD_INVITE, id);
             } else if (uriMatcher.match(uri) == ADD_CONF) {
-                long id = database.insertConf(contentValues);
+                long id = database.insertConf(contentValues, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
                 returnUri = ContentUris.withAppendedId(Contract.ConfsEntry.CONTENT_URI_ADD_CONF, id);
             } else if (uriMatcher.match(uri) == ADD_TOPIC) {
-                long id = database.insertTopic(contentValues);
+                long id = database.insertTopic(contentValues, Utils.getUserDataFromSharedPreferences(getContext()).getUserID());
                 returnUri = ContentUris.withAppendedId(Contract.TopicEntry.CONTENT_URI_ADD_TOPIC, id);
             }
         } catch (Exception e) {
@@ -135,7 +146,11 @@ public class DataProvider extends ContentProvider {
     @Override
     public int delete (Uri uri, String s, String[] strings) {
         if (uriMatcher.match(uri) == DELETE_CONF) {
-            if (database.deleteConf(uri.getPathSegments().get(2))) return 1;
+            try {
+                if (database.deleteConf(uri.getPathSegments().get(2), Utils.getUserDataFromSharedPreferences(getContext()).getUserID())) return 1;
+            } catch (PermissionException e) {
+                e.printStackTrace();
+            }
         }
         return 0;
     }
@@ -143,14 +158,26 @@ public class DataProvider extends ContentProvider {
     @Override
     public int update (Uri uri, ContentValues contentValues, String s, String[] strings) {
         if (uriMatcher.match(uri) == ACCEPT_INVITE) {
-            if (database.acceptInvite(strings[0]))
-                return 1;
+            try {
+                if (database.acceptInvite(strings[0], Utils.getUserDataFromSharedPreferences(getContext()).getUserID()))
+                    return 1;
+            } catch (PermissionException e) {
+                e.printStackTrace();
+            }
         } else if (uriMatcher.match(uri) == REJECT_INVITE) {
-            if (database.rejectInvite(strings[0]))
-                return 1;
+            try {
+                if (database.rejectInvite(strings[0], Utils.getUserDataFromSharedPreferences(getContext()).getUserID()))
+                    return 1;
+            } catch (PermissionException e) {
+                e.printStackTrace();
+            }
         } else if (uriMatcher.match(uri) == UPDATE_CONF) {
-            if (database.updateConf(strings[0], contentValues))
-                return 1;
+            try {
+                if (database.updateConf(strings[0], contentValues, Utils.getUserDataFromSharedPreferences(getContext()).getUserID()))
+                    return 1;
+            } catch (PermissionException e) {
+                e.printStackTrace();
+            }
         }
         return 0;
     }

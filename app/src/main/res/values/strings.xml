@@ -48,4 +48,5 @@
     <string name="reject">Reject</string>
     <string name="add_to_calendar">Add to Calendar</string>
     <string name="try_again">Error, please try again!</string>
+    <string name="no_access">You cannot access this functionality</string>
 </resources>

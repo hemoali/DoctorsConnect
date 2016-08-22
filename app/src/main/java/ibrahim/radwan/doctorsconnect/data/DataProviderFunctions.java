@@ -4,11 +4,13 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.net.Uri;
 import android.support.v4.content.CursorLoader;
 
 import ibrahim.radwan.doctorsconnect.Models.User;
 import ibrahim.radwan.doctorsconnect.Models.Topic;
+import ibrahim.radwan.doctorsconnect.Utils.PermissionException;
 
 /**
  * Created by ibrahimradwan on 8/21/16.
@@ -28,6 +30,7 @@ public class DataProviderFunctions {
 
     /**
      * Auth user to login
+     *
      * @param email
      * @param pass
      * @param context
@@ -60,8 +63,9 @@ public class DataProviderFunctions {
      * @param type
      * @param context
      * @return User object if the inserting was successful, null if error happened
+     * @throws SQLiteConstraintException: When user type id doesn't exist
      */
-    public User AddUser (String email, String pass, String type, Context context) {
+    public User AddUser (String email, String pass, String type, Context context) throws SQLiteConstraintException {
         ContentValues contentValues = new ContentValues();
         contentValues.put(Contract.UserEntry.COLUMN_USER_EMAIL, email);
         contentValues.put(Contract.UserEntry.COLUMN_USER_PASS, pass);
@@ -111,10 +115,11 @@ public class DataProviderFunctions {
 
     /**
      * Fetches all doctors from db
+     *
      * @param context
      * @return cursor points to doctors
      */
-    public Cursor getDoctors (Context context) {
+    public Cursor getDoctors (Context context) throws PermissionException {
         CursorLoader cursorLoader = new CursorLoader(context, Contract.UserEntry.CONTENT_URI_GET_USER,
                 null, null, null, null);
         Cursor c = cursorLoader.loadInBackground();
@@ -132,8 +137,9 @@ public class DataProviderFunctions {
      * @param title
      * @param context
      * @return topic _id and -1 if cannot insert
+     * @throws SQLiteConstraintException: When doctor id doesn't exist
      */
-    public long AddTopic (String doc_id, String title, Context context) {
+    public long AddTopic (String doc_id, String title, Context context) throws SQLiteConstraintException, PermissionException {
         ContentValues values = new ContentValues();
         values.put(Contract.TopicEntry.COLUMN_DOC_ID, doc_id);
         values.put(Contract.TopicEntry.COLUMN_TOPIC_TITLE, title);
@@ -144,6 +150,7 @@ public class DataProviderFunctions {
 
     /**
      * Fetchs all topics from db
+     *
      * @param context
      * @return cursor points to all topics
      */
@@ -213,8 +220,9 @@ public class DataProviderFunctions {
      * @param topic_id
      * @param context
      * @return new conference ID, -1 if operation failed
+     * @throws SQLiteConstraintException: When topic id doesn't exist
      */
-    public long AddConf (String name, String time, String topic_id, Context context) {
+    public long AddConf (String name, String time, String topic_id, Context context) throws SQLiteConstraintException, PermissionException {
         ContentValues values = new ContentValues();
         values.put(Contract.ConfsEntry.COLUMN_CONF_NAME, name);
         values.put(Contract.ConfsEntry.COLUMN_CONF_DATETIME, time);
@@ -231,7 +239,7 @@ public class DataProviderFunctions {
      * @param context
      * @return true if deleted, false otherwise
      */
-    public boolean deleteConf (String id, Context context) {
+    public boolean deleteConf (String id, Context context) throws PermissionException {
         if (context.getContentResolver().delete(Contract.ConfsEntry.CONTENT_URI_DELETE_CONF.buildUpon().appendPath(id).build(), null, null) == 1) {
             return true;
         }
@@ -247,8 +255,9 @@ public class DataProviderFunctions {
      * @param topic_id
      * @param context
      * @return true if updated, false otherwise
+     * @throws SQLiteConstraintException: When topic_id doesn't exist
      */
-    public boolean UpdateConf (String conf_id, String name, String time, String topic_id, Context context) {
+    public boolean UpdateConf (String conf_id, String name, String time, String topic_id, Context context) throws SQLiteConstraintException, PermissionException {
         ContentValues contentValues = new ContentValues();
         contentValues.put(Contract.ConfsEntry.COLUMN_TOPIC_ID, topic_id);
         contentValues.put(Contract.ConfsEntry.COLUMN_CONF_NAME, name);
@@ -266,8 +275,9 @@ public class DataProviderFunctions {
      * @param conf_id
      * @param context
      * @return new invite id, -1 if operation failed
+     * @throws SQLiteConstraintException: When doctor_id, admin_id or conf_id don't exist
      */
-    public long AddInvite (String doc_id, String admin_id, String conf_id, Context context) {
+    public long AddInvite (String doc_id, String admin_id, String conf_id, Context context) throws SQLiteConstraintException, PermissionException {
         ContentValues values = new ContentValues();
         values.put(Contract.InvitesEntry.COLUMN_DOC_ID, doc_id);
         values.put(Contract.InvitesEntry.COLUMN_ADMIN_ID, admin_id);
@@ -285,7 +295,7 @@ public class DataProviderFunctions {
      * @param doc_id
      * @return cursor points to all invites
      */
-    public Cursor getInvitesByDocID (Context context, String doc_id) {
+    public Cursor getInvitesByDocID (Context context, String doc_id) throws PermissionException {
         CursorLoader cursorLoader = new CursorLoader(context, Contract.InvitesEntry.CONTENT_URI_GET_INVITES.buildUpon().appendPath(doc_id).build(),
                 null, null, null, null);
         Cursor c = cursorLoader.loadInBackground();
@@ -302,7 +312,7 @@ public class DataProviderFunctions {
      * @param context
      * @return true if accpeted, false otherwise
      */
-    public boolean AcceptInvite (String id, Context context) {
+    public boolean AcceptInvite (String id, Context context) throws PermissionException {
         ContentValues contentValues = new ContentValues();
         contentValues.put(Contract.InvitesEntry.COLUMN_STATUS_ID, Contract.InviteStatusEntry.INVITE_STATUS_ACCEPTED_ID);
         if (context.getContentResolver().update(Contract.InvitesEntry.CONTENT_URI_ACCEPT_INVITE, contentValues, null, new String[]{id}) == 1) {
@@ -319,7 +329,7 @@ public class DataProviderFunctions {
      * @return true if rejected, false otherwise
      */
 
-    public boolean RejectInvite (String id, Context context) {
+    public boolean RejectInvite (String id, Context context) throws PermissionException {
         ContentValues contentValues = new ContentValues();
         contentValues.put(Contract.InvitesEntry.COLUMN_STATUS_ID, Contract.InviteStatusEntry.INVITE_STATUS_REJECTED_ID);
         if (1 == context.getContentResolver().update(Contract.InvitesEntry.CONTENT_URI_REJECT_INVITE, contentValues, null, new String[]{id}))

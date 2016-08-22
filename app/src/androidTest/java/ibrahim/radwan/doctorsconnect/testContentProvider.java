@@ -5,6 +5,9 @@ import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.test.AndroidTestCase;
 
+import ibrahim.radwan.doctorsconnect.Models.User;
+import ibrahim.radwan.doctorsconnect.Utils.PermissionException;
+import ibrahim.radwan.doctorsconnect.Utils.Utils;
 import ibrahim.radwan.doctorsconnect.data.Contract;
 import ibrahim.radwan.doctorsconnect.data.DataProviderFunctions;
 import ibrahim.radwan.doctorsconnect.data.Database;
@@ -38,10 +41,11 @@ public class TestContentProvider extends AndroidTestCase {
             c = dpf.checkForEmail("exADMIN@ex.com", mContext);
             assertTrue("Error: Email not found although its inserted !!!", c.getCount() > 0);
             c.close();
+            Utils.saveUserDataToSharedPreferences(new User("1", "ex@ex.com", null, "1"), getContext());
             assertTrue("Error, cannot insert topic!!!", dpf.AddTopic("1", "asd", mContext) != -1);
 
             assertFalse("Error: cannot load topic by id", dpf.getTopicByID("1", mContext) == null);
-
+            Utils.saveUserDataToSharedPreferences(new User("2", "exADMIN@ex.com", null, "2"), getContext());
             assertTrue("Error, cannot insert conf!!!", dpf.AddConf("asd", "!23", "1", mContext) != -1);
 
             c = dpf.getConfByID("1", mContext);
@@ -64,6 +68,7 @@ public class TestContentProvider extends AndroidTestCase {
             assertTrue("Error, cannot insert conf!!!", dpf.AddConf("asd", "!23", "1", mContext) != -1);
 
             assertTrue("Error, cannot insert invite!!!", dpf.AddInvite("1", "2", "2", mContext) != -1);
+            Utils.saveUserDataToSharedPreferences(new User("1", "ex@ex.com", null, "1"), getContext());
 
             c = dpf.getInvitesByDocID(mContext, "1");
             c.moveToFirst();
@@ -78,11 +83,15 @@ public class TestContentProvider extends AndroidTestCase {
 
             assertTrue("Error, Cannot reject invite", dpf.RejectInvite("1", mContext) == true);
 
+            Utils.saveUserDataToSharedPreferences(new User("2", "exADMIN@ex.com", null, "2"), getContext());
+
             c = dpf.getDoctors(mContext);
             assertFalse("Error: Cannot fetch doctors", c.getCount() == 0);
             c.close();
 
             assertFalse("Error: Cannot login user", dpf.userLogin("ex@exx.com", "exexex", mContext) == null);
+
+            Utils.saveUserDataToSharedPreferences(new User("1", "ex@ex.com", null, "1"), getContext());
 
             c = DataProviderFunctions.getInstance().getInvitesByDocID(mContext, "1");
             assertFalse("Error, Can fetch rejected invites", c.getCount() > 0);
@@ -99,6 +108,8 @@ public class TestContentProvider extends AndroidTestCase {
         } catch (SQLiteConstraintException e) {
             e.printStackTrace();
             fail("SQLite Constraint Error");
+        } catch (PermissionException e) {
+            e.printStackTrace();
         }
         //Get Topics
         database.close();
