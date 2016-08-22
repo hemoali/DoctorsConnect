@@ -6,6 +6,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.v4.content.CursorLoader;
+import android.util.Log;
 
 import ibrahim.radwan.doctorsconnect.Models.User;
 import ibrahim.radwan.doctorsconnect.Models.Topic;
@@ -176,9 +177,24 @@ public class DataProviderFunctions {
         CursorLoader cursorLoader = new CursorLoader(context, Contract.InvitesEntry.CONTENT_URI_GET_INVITES.buildUpon().appendPath(doc_id).build(),
                 null, null, null, null);
         Cursor c = cursorLoader.loadInBackground();
+        Log.e("TAGEEEN", c.getCount()+" ");
         if (c != null && c.getCount() > 0) {
             c.moveToFirst();
         }
         return c;
     }
+
+    public void AcceptInvite (String id, Context context) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(Contract.InvitesEntry.COLUMN_STATUS_ID, Contract.InviteStatusEntry.INVITE_STATUS_ACCEPTED_ID);
+        context.getContentResolver().update(Contract.InvitesEntry.CONTENT_URI_ACCEPT_INVITE, contentValues, null, new String[]{id});
+
+    }
+
+    public void RejectInvite (String id, Context context) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(Contract.InvitesEntry.COLUMN_STATUS_ID, Contract.InviteStatusEntry.INVITE_STATUS_REJECTED_ID);
+        context.getContentResolver().update(Contract.InvitesEntry.CONTENT_URI_REJECT_INVITE, contentValues, null, new String[]{id});
+    }
+
 }

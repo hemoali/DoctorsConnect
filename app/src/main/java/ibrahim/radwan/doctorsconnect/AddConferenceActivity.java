@@ -56,7 +56,7 @@ public class AddConferenceActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setLogo(R.mipmap.ic_launcher);
         getSupportActionBar().setDisplayUseLogoEnabled(true);
-        getSupportActionBar().setTitle(R.string.new_conference);
+        getSupportActionBar().setTitle((getIntent().getStringExtra(Contract.ConfsEntry.COLUMN_CONF_ID) != null) ? R.string.edit_conference : R.string.new_conference);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         setContentView(R.layout.activity_add_conference);

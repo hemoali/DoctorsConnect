@@ -42,4 +42,8 @@
     <string name="invite_sent">Invite sent</string>
     <string name="topic_title">Topic Title</string>
     <string name="minimum_tem_length">Minimum length is 10 letters</string>
+    <string name="invite_menu">Invite Menu</string>
+    <string name="accept">Accept</string>
+    <string name="reject">Reject</string>
+    <string name="add_to_calendar">Add to Calendar</string>
 </resources>

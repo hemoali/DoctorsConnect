@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.provider.CalendarContract;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SimpleCursorAdapter;
@@ -23,8 +24,12 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 import ibrahim.radwan.doctorsconnect.Models.Conference;
 import ibrahim.radwan.doctorsconnect.Models.Invite;
@@ -42,12 +47,15 @@ import ibrahim.radwan.doctorsconnect.data.DataProviderFunctions;
 public class ListViewFragment extends Fragment {
     static private User mUser; // Current user
 
-    static private List<Conference> allConferences = new ArrayList<>();
+    private List<Conference> allConferences = new ArrayList<>();
     static private List<Invite> allInvites = new ArrayList<>();
 
     // Adapter
     static private ConferenceAdapter mConferenceAdapter;
     static private SimpleCursorAdapter topicsAdapter;
+    static private InviteAdapter mInviteAdapter;
+
+
     static private Cursor mTopicsCursor;
     private static final String ARG_SECTION_NUMBER = "section_number";
     //Views
@@ -105,6 +113,7 @@ public class ListViewFragment extends Fragment {
                     noElementsView.setVisibility(View.VISIBLE);
                 } else {
                     c.moveToFirst();
+                    allInvites.clear();
                     do {
                         allConferences.add(new Conference(c.getString(c.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_ID)),
                                 c.getString(c.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_NAME)),
@@ -169,7 +178,6 @@ public class ListViewFragment extends Fragment {
                     builder.setPositiveButton("ADD", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick (DialogInterface dialog, int which) {
-                            Log.e("TAGGGG", mainListView.getVisibility() + " ");
                             topicText = input.getText().toString().trim();
                             if (topicText.length() < 10) {
                                 Toast.makeText(getActivity(), R.string.minimum_tem_length, Toast.LENGTH_SHORT).show();
@@ -228,16 +236,15 @@ public class ListViewFragment extends Fragment {
                 //Hide add button
                 fab.setVisibility(View.INVISIBLE);
                 //Get invites
+                mInviteAdapter = new InviteAdapter(getContext(), null, 0);
                 Cursor cursor = DataProviderFunctions.getInstance().getInvitesByDocID(getContext(), mUser.getUserID());
+                mainListView.setAdapter(mInviteAdapter);
                 if (cursor.getCount() > 0) {
-                    cursor.moveToFirst();
-
-                    InviteAdapter mInviteAdapter = new InviteAdapter(getContext(), null, 0);
                     mInviteAdapter.swapCursor(cursor);
-
-                    mainListView.setAdapter(mInviteAdapter);
-
+                    cursor.moveToFirst();
                     do {
+                        Log.e("TAGSTAGSTAGSTAGS", cursor.getCount() + "  ");
+
                         allInvites.add(new Invite(cursor.getString(cursor.getColumnIndex(Contract.InvitesEntry.COLUMN_INVITE_ID)),
                                 cursor.getString(cursor.getColumnIndex(Contract.InvitesEntry.COLUMN_CONF_ID)),
                                 cursor.getString(cursor.getColumnIndex(Contract.InvitesEntry.COLUMN_ADMIN_ID)),
@@ -258,40 +265,40 @@ public class ListViewFragment extends Fragment {
                     mainListView.setVisibility(View.GONE);
                     noElementsView.setVisibility(View.VISIBLE);
                 }
-                cursor.close();
-
             }
         }
         return rootView;
     }
 
     @Override
-    public void onResume () {
-        //Refetch topics
-        Cursor cursor = DataProviderFunctions.getInstance().getTopics(getContext());
-        //Update adapter and notify LV
-        topicsAdapter.swapCursor(cursor);
-        topicsAdapter.notifyDataSetChanged();
-        super.onResume();
-    }
-
-    @Override
     public void onCreateContextMenu (ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
+        if (mUser.getTypeID().equals(Contract.UserTypeEntry.USER_TYPE_ADMIN_ID)) {
+            menu.setHeaderTitle(R.string.conference_menu);
+            menu.add(0, v.getId(), 0, R.string.edit);
+            menu.add(0, v.getId(), 0, R.string.delete);
+            menu.add(0, v.getId(), 0, R.string.send_invites);
+        } else {
+            AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
+            int position = info.position;
 
-        Log.e("TAG", v.getTag().toString());
-        menu.setHeaderTitle("Invite Menu");
-        menu.add(0, v.getId(), 0, "Accept");
-        menu.add(0, v.getId(), 0, "Reject");
-        //menu.add(0, v.getId(), 0, R.string.send_invites);
+            menu.setHeaderTitle(R.string.invite_menu);
+
+            if (allInvites.get(position).getStatusID().equals(Contract.InviteStatusEntry.INVITE_STATUS_PENDING_ID)) {
+                menu.add(0, v.getId(), 0, R.string.accept);
+                menu.add(0, v.getId(), 0, R.string.reject);
+            } else if (allInvites.get(position).getStatusID().equals(Contract.InviteStatusEntry.INVITE_STATUS_ACCEPTED_ID)) {
+                menu.add(0, v.getId(), 0, R.string.add_to_calendar);
+            }
+        }
     }
 
     @Override
     public boolean onContextItemSelected (MenuItem item) {
-        if (mUser.getTypeID() == Contract.UserTypeEntry.USER_TYPE_ADMIN_ID) {
-            AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-            //Get selected conf
-            final int listPosition = info.position;
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        //Get selected conf
+        final int listPosition = info.position;
+        if (mUser.getTypeID().equals(Contract.UserTypeEntry.USER_TYPE_ADMIN_ID)) {
             //Delete conf
             if (item.getTitle().toString().equals(getResources().getString(R.string.edit))) {
                 Intent i = new Intent(getContext(), AddConferenceActivity.class);
@@ -313,6 +320,7 @@ public class ListViewFragment extends Fragment {
                     noElementsView.setVisibility(View.VISIBLE);
                 }
             } else if (item.getTitle().toString().equals(getResources().getString(R.string.send_invites))) {
+                Log.e("ERROR", "ConfID " + allConferences.get(listPosition).getId() + " Pos = " + listPosition);
                 //Get all docotrs
                 final Cursor allDoctors = DataProviderFunctions.getInstance().getDoctors(getActivity());
 
@@ -363,6 +371,45 @@ public class ListViewFragment extends Fragment {
                             }
                         });
                 builderSingle.show();
+            }
+        } else if (mUser.getTypeID().equals(Contract.UserTypeEntry.USER_TYPE_USER_ID)) {
+            Log.e("TAGSTAGSTAGSTAGS2333322", allInvites.size() + "  ");
+
+            if (item.getTitle().toString().equals(getResources().getString(R.string.accept))) {
+                DataProviderFunctions.getInstance().AcceptInvite(allInvites.get(listPosition).getId(), getContext());
+                Cursor c = DataProviderFunctions.getInstance().getInvitesByDocID(getContext(), mUser.getUserID());
+                mInviteAdapter.swapCursor(c);
+                allInvites.get(listPosition).setStatusID(Contract.InviteStatusEntry.INVITE_STATUS_ACCEPTED_ID);
+            } else if (item.getTitle().toString().equals(getResources().getString(R.string.reject))) {
+                DataProviderFunctions.getInstance().RejectInvite(allInvites.get(listPosition).getId(), getContext());
+                Cursor c = DataProviderFunctions.getInstance().getInvitesByDocID(getContext(), mUser.getUserID());
+                mInviteAdapter.swapCursor(c);
+                allInvites.remove(listPosition);
+                if (allInvites.size() == 0) {
+                    mainListView.setVisibility(View.GONE);
+                    noElementsView.setVisibility(View.VISIBLE);
+                }
+            } else if (item.getTitle().toString().equals(getResources().getString(R.string.add_to_calendar))) {
+
+                Calendar beginTime = Calendar.getInstance();
+                SimpleDateFormat dateFormatter = new SimpleDateFormat("MMM, dd yyyy  k:m", Locale.US);
+                //Get invite data
+                Cursor confCursor = DataProviderFunctions.getInstance().getConfByID(allInvites.get(listPosition).getConfID(), getContext());
+
+                try {
+                    beginTime.setTime(dateFormatter.parse(confCursor.getString(confCursor.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_DATETIME))));
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                Intent intent = new Intent(Intent.ACTION_INSERT)
+                        .setData(CalendarContract.Events.CONTENT_URI)
+                        .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, beginTime.getTimeInMillis())
+                        .putExtra(CalendarContract.Events.TITLE, "Conference: " + confCursor.getString(confCursor.getColumnIndex(Contract.ConfsEntry.COLUMN_CONF_NAME)))
+                        .putExtra(CalendarContract.Events.DESCRIPTION, "Attend the medical conference which will discuss: " + DataProviderFunctions.getInstance().getTopicByID(confCursor.getString(confCursor.getColumnIndex(Contract.ConfsEntry.COLUMN_TOPIC_ID)), getContext()).getTitle())
+                        .putExtra(CalendarContract.Events.AVAILABILITY, CalendarContract.Events.AVAILABILITY_BUSY)
+                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getActivity().startActivity(intent);
+
             }
         }
         return true;

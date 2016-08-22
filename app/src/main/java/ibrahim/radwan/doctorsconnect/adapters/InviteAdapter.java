@@ -44,9 +44,7 @@ public class InviteAdapter extends CursorAdapter {
 
         //Get Admin Email
         User u = DataProviderFunctions.getInstance().getUserByID(cursor.getString(cursor.getColumnIndex(Contract.InvitesEntry.COLUMN_ADMIN_ID)), context);
-        adminEmail.setText(u.getUserEmail());
-        //Set tag for context meenu
-        view.setTag(cursor.getString(cursor.getColumnIndex(Contract.InvitesEntry.COLUMN_INVITE_ID)));
+        adminEmail.setText("By: " + u.getUserEmail());
     }
 
     @Override
