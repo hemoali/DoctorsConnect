@@ -13,7 +13,6 @@
         android:layout_alignParentTop="true"
         android:layout_marginLeft="@dimen/activity_horizontal_margin"
         android:layout_marginTop="@dimen/activity_vertical_margin"
-        android:text="Title......"
         android:textSize="@dimen/large_text_size"
         android:textStyle="bold"/>
 
@@ -24,7 +23,6 @@
         android:layout_below="@+id/conf_name"
         android:layout_marginLeft="@dimen/activity_horizontal_margin"
         android:layout_marginTop="@dimen/activity_vertical_margin"
-        android:text="Topic......"
         android:textSize="@dimen/normal_font_size"
         android:textStyle="normal"/>
 
@@ -37,7 +35,6 @@
         android:layout_alignParentTop="true"
         android:layout_marginRight="@dimen/activity_horizontal_margin"
         android:layout_marginTop="@dimen/activity_vertical_margin"
-        android:text="Time Time"
         android:textColor="@color/colorPrimaryDark"
         android:textSize="@dimen/small_font_size"
         android:textStyle="italic"/>

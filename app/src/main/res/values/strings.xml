@@ -40,4 +40,6 @@
     <string name="edit_conference">Edit Conference</string>
     <string name="conference_updated">Conference updated successfully</string>
     <string name="invite_sent">Invite sent</string>
+    <string name="topic_title">Topic Title</string>
+    <string name="minimum_tem_length">Minimum length is 10 letters</string>
 </resources>

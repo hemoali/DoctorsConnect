@@ -4,7 +4,7 @@ package ibrahim.radwan.doctorsconnect.Models;
  * Created by ibrahimradwan on 8/21/16.
  */
 public class Topic {
-    String id, doc_id, title;
+    private String id, doc_id, title;
 
     @Override
     public String toString () {

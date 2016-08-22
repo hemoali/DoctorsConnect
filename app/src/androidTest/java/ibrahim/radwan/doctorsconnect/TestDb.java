@@ -3,6 +3,7 @@ package ibrahim.radwan.doctorsconnect;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.SQLException;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.test.AndroidTestCase;
 import android.util.Log;
@@ -254,7 +255,9 @@ public class TestDb extends AndroidTestCase {
         try {
             id = database.insertUser(values);
             fail("ERROR: The user with same email created");
-        } catch (SQLException expectedException) {
+        } catch (SQLiteConstraintException expectedException) {
+        } catch (SQLException e) {
+
         }
 
         // insert user other than admin or user
@@ -265,7 +268,10 @@ public class TestDb extends AndroidTestCase {
         try {
             id = database.insertUser(values);
             fail("ERROR: The user with non-availabe type added");
-        } catch (SQLException expectedException) {
+        } catch (SQLiteConstraintException expectedException) {
+
+        } catch (SQLException e) {
+
         }
         // Check for inserted user
         values = new ContentValues();
@@ -309,7 +315,7 @@ public class TestDb extends AndroidTestCase {
         try {
             long id = database.insertTopic(values);
             fail("Error: invalid topic inserted: no such doctor");
-        } catch (SQLException | InvalidDoctorIDException e) {
+        } catch (SQLiteConstraintException | InvalidDoctorIDException e) {
         }
         // Insert user to test inset null topic
         values = new ContentValues();
@@ -319,9 +325,8 @@ public class TestDb extends AndroidTestCase {
         long user_id = -1;
         try {
             user_id = database.insertUser(values);
-            Log.e("ERROR", "ID " + user_id);
             assertFalse("Error inserting user", user_id == -1);
-        } catch (SQLException e) {
+        } catch (SQLiteConstraintException e) {
         }
         values = new ContentValues();
         values.put(Contract.TopicEntry.COLUMN_DOC_ID, 1);
@@ -329,7 +334,9 @@ public class TestDb extends AndroidTestCase {
         try {
             long id = database.insertTopic(values);
             fail("Error: inserting null topic worked !!!");
-        } catch (SQLException | InvalidDoctorIDException e) {
+        } catch (SQLiteConstraintException e) {
+        } catch (SQLException e) {
+        } catch (InvalidDoctorIDException e) {
         }
         // Insert user to test inset good topic
         values = new ContentValues();
@@ -338,7 +345,7 @@ public class TestDb extends AndroidTestCase {
         try {
             long id = database.insertTopic(values);
             assertFalse("Error inserting topic", id == -1);
-        } catch (SQLException | InvalidDoctorIDException e) {
+        } catch (SQLiteConstraintException | InvalidDoctorIDException e) {
             fail("Error inserting topic");
         }
 
@@ -387,6 +394,7 @@ public class TestDb extends AndroidTestCase {
         try {
             long id = database.insertConf(values);
             fail("Error: inserting invalid topic-id-conf worked !!!");
+        } catch (SQLiteConstraintException e) {
         } catch (SQLException e) {
         }
         // test insert null conf
@@ -497,9 +505,9 @@ public class TestDb extends AndroidTestCase {
         values.put(Contract.InvitesEntry.COLUMN_CONF_ID, "3421");
         values.put(Contract.InvitesEntry.COLUMN_STATUS_ID, "34121");
         try {
-            id = database.insertConf(values);
+            id = database.insertInvite(values);
             fail("Error: inserting invalid invite worked !!!");
-        } catch (SQLException e) {
+        } catch (SQLException | InvalidDoctorIDException e) {
         }
 
         // Insert invalid invite
@@ -509,9 +517,11 @@ public class TestDb extends AndroidTestCase {
         values.put(Contract.InvitesEntry.COLUMN_CONF_ID, "3421");
         values.put(Contract.InvitesEntry.COLUMN_STATUS_ID, "34121");
         try {
-            id = database.insertConf(values);
+            id = database.insertInvite(values);
             fail("Error: inserting invalid invite worked !!!");
-        } catch (SQLException e) {
+        } catch (SQLiteConstraintException e) {
+
+        } catch (SQLException | InvalidDoctorIDException e) {
         }
         // Insert invalid invite
         values = new ContentValues();
@@ -520,9 +530,11 @@ public class TestDb extends AndroidTestCase {
         values.put(Contract.InvitesEntry.COLUMN_CONF_ID, "3421");
         values.put(Contract.InvitesEntry.COLUMN_STATUS_ID, "34121");
         try {
-            id = database.insertConf(values);
+            id = database.insertInvite(values);
             fail("Error: inserting invalid invite worked !!!");
-        } catch (SQLException e) {
+        } catch (SQLiteConstraintException e) {
+
+        } catch (SQLException | InvalidDoctorIDException e) {
         }
         // Insert invalid invite
         values = new ContentValues();
@@ -531,9 +543,9 @@ public class TestDb extends AndroidTestCase {
         values.put(Contract.InvitesEntry.COLUMN_CONF_ID, "1");
         values.put(Contract.InvitesEntry.COLUMN_STATUS_ID, "34121");
         try {
-            id = database.insertConf(values);
+            id = database.insertInvite(values);
             fail("Error: inserting invalid invite worked !!!");
-        } catch (SQLException e) {
+        } catch (SQLException | InvalidDoctorIDException e) {
         }
         // Insert valid invite
         values = new ContentValues();
@@ -557,7 +569,7 @@ public class TestDb extends AndroidTestCase {
         values.put(Contract.InvitesEntry.COLUMN_DOC_ID, "1");
         Cursor c = database.fetchInvites(values);
         c.moveToFirst();
-        assertTrue("Error, the invite isn't updated as expected!!", c.getString(c.getColumnIndex(Contract.InvitesEntry.COLUMN_STATUS_ID)).equals(Contract.InviteStatusEntry.INVITE_STATUS_REJECTED_ID));
+        assertFalse("Error, the invite isn't updated as expected!!", c.getCount() > 0);
         c.close();
         db.close();
         database.close();

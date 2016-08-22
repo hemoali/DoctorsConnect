@@ -69,14 +69,6 @@ public class MainActivity extends AppCompatActivity {
         tabLayout.setupWithViewPager(mViewPager);
 
         fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick (View view) {
-                Intent i = new Intent(getApplicationContext(), AddConferenceActivity.class);
-                startActivity(i);
-                finish();
-            }
-        });
 
     }
 

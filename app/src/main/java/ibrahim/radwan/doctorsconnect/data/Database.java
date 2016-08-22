@@ -311,6 +311,22 @@ public class Database extends SQLiteOpenHelper {
     }
 
     /**
+     * @return confs
+     */
+    public Cursor fetchConfByID (String conf_id) {
+        SQLiteQueryBuilder sqliteQueryBuilder = new SQLiteQueryBuilder();
+        sqliteQueryBuilder.setTables(Contract.ConfsEntry.TABLE_CONFS);
+        Cursor cursor = sqliteQueryBuilder.query(getReadableDatabase(),
+                null,
+                Contract.ConfsEntry.COLUMN_CONF_ID + " = ?",
+                new String[]{conf_id},
+                null,
+                null,
+                "");
+        return cursor;
+    }
+
+    /**
      * updates conf values
      *
      * @param id
@@ -352,11 +368,11 @@ public class Database extends SQLiteOpenHelper {
         if (checkUserType(values.getAsString(Contract.TopicEntry.COLUMN_DOC_ID)) != Contract.UserTypeEntry.USER_TYPE_USER_ID) {
             throw new InvalidDoctorIDException("The ID doesn't belong to doctor");
         }
-        long conf_id = getWritableDatabase().insert(Contract.InvitesEntry.TABLE_INVITES, "", values);
-        if (conf_id <= 0) {
+        long invite_id = getWritableDatabase().insert(Contract.InvitesEntry.TABLE_INVITES, "", values);
+        if (invite_id <= 0) {
             throw new SQLException("Failed to add new invite");
         }
-        return conf_id;
+        return invite_id;
     }
 
     /**
@@ -397,8 +413,8 @@ public class Database extends SQLiteOpenHelper {
         sqliteQueryBuilder.setTables(Contract.InvitesEntry.TABLE_INVITES);
         Cursor cursor = sqliteQueryBuilder.query(getReadableDatabase(),
                 null,
-                Contract.InvitesEntry.COLUMN_DOC_ID + " = ?",
-                new String[]{values.getAsString(Contract.InvitesEntry.COLUMN_DOC_ID)},
+                Contract.InvitesEntry.COLUMN_DOC_ID + " = ? AND " + Contract.InvitesEntry.COLUMN_STATUS_ID + " != ?",
+                new String[]{values.getAsString(Contract.InvitesEntry.COLUMN_DOC_ID), Contract.InviteStatusEntry.INVITE_STATUS_REJECTED_ID},
                 null,
                 null,
                 Contract.InvitesEntry.COLUMN_INVITE_ID + " DESC");

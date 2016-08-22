@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="@dimen/activity_vertical_margin"
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:paddingStart="@dimen/activity_horizontal_margin">
+
+    <ImageView
+        android:id="@+id/status_imageview"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        />
+
+    <TextView
+        android:id="@+id/conf_name_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:layout_toEndOf="@+id/status_imageview"
+        android:layout_toRightOf="@+id/status_imageview"
+        android:text="Conf name..."
+        android:textSize="@dimen/large_text_size"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:id="@+id/topic_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/conf_name_textview"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:layout_toEndOf="@+id/status_imageview"
+        android:layout_toRightOf="@+id/status_imageview"
+        android:text="Topic title..."
+        android:textSize="@dimen/normal_font_size"/>
+
+    <TextView
+        android:id="@+id/admin_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/topic_textview"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:layout_marginTop="@dimen/admin_email_margin_top"
+        android:layout_toEndOf="@+id/status_imageview"
+        android:layout_toRightOf="@+id/status_imageview"
+        android:text="By: Admin Email..."
+        android:textColor="@color/colorPrimary"
+        android:textSize="@dimen/small_font_size"/>
+
+    <TextView
+        android:id="@+id/conf_datetime_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/admin_textview"
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        android:layout_toEndOf="@+id/status_imageview"
+        android:layout_toRightOf="@+id/status_imageview"
+        android:gravity="bottom|right"
+        android:text="Time Time ..."
+        android:textColor="@color/colorPrimaryDark"
+        android:textSize="@dimen/small_font_size"
+        android:textStyle="italic"/>
+</RelativeLayout>

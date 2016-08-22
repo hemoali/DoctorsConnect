@@ -4,7 +4,7 @@ package ibrahim.radwan.doctorsconnect.Models;
  * Created by ibrahimradwan on 8/21/16.
  */
 public class Conference {
-    String id, name, topic_id, datetime;
+    private String id, name, topic_id, datetime;
 
     public String getId () {
         return id;

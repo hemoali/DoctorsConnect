@@ -101,6 +101,8 @@ public class Contract {
         public static final String PATH_UPDATE_CONF = "update";
         public static final String PATH_DELETE_CONF = "delete";
 
+        public static final Uri CONTENT_URI_GET_CONF_BY_ID =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_CONFS).build();
         public static final Uri CONTENT_URI_GET_CONFS =
                 BASE_CONTENT_URI.buildUpon().appendPath(PATH_CONFS).appendPath(PATH_GET_CONFS).build();
         public static final Uri CONTENT_URI_ADD_CONF =

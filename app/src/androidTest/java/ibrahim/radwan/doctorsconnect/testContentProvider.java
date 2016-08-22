@@ -10,6 +10,7 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 
 import ibrahim.radwan.doctorsconnect.data.Contract;
+import ibrahim.radwan.doctorsconnect.data.DataProviderFunctions;
 import ibrahim.radwan.doctorsconnect.data.Database;
 
 /**
@@ -54,21 +55,17 @@ public class TestContentProvider extends AndroidTestCase {
         mContext.getContentResolver().update(Contract.InvitesEntry.CONTENT_URI_REJECT_INVITE, contentValues, null, new String[]{id});
     }
 
-    private void getInvites () {
-        CursorLoader cursorLoader = new CursorLoader(mContext, Contract.InvitesEntry.CONTENT_URI_GET_INVITES.buildUpon().appendPath("1").build(),
-                null, null, null, null);
-        Cursor c = cursorLoader.loadInBackground();
-        c.moveToFirst();
-        assertTrue("Error: Cannot fetch invites", c.getCount() > 0);
-        c.close();
-    }
 
     private void checkLastInviteStatus (String inviteStatusId) {
         CursorLoader cursorLoader = new CursorLoader(mContext, Contract.InvitesEntry.CONTENT_URI_GET_INVITES.buildUpon().appendPath("1").build(),
                 null, null, null, null);
         Cursor c = cursorLoader.loadInBackground();
         c.moveToFirst();
-        assertTrue("Error: Cannot fetch invites or some invites are incorrect", c.getCount() > 0 && c.getString(c.getColumnIndex(Contract.InvitesEntry.COLUMN_STATUS_ID)).equals(inviteStatusId));
+        if (inviteStatusId.equals(Contract.InviteStatusEntry.INVITE_STATUS_REJECTED_ID)) {
+            assertFalse("Error: Can fetch rejected invites !!!", c.getCount() > 0);
+        } else {
+            assertTrue("Error: Cannot fetch invites !!!", c.getCount() > 0);
+        }
         c.close();
     }
 
@@ -179,7 +176,13 @@ public class TestContentProvider extends AndroidTestCase {
         assertFalse("Error: cannot load user by id" + c.getCount(), c.getCount() == 0);
         c.close();
     }
-
+    private void getConfByID (String id) {
+        CursorLoader cursorLoader = new CursorLoader(mContext, Contract.ConfsEntry.CONTENT_URI_GET_CONF_BY_ID.buildUpon().appendPath(id).build(),
+                null, null, null, null);
+        Cursor c = cursorLoader.loadInBackground();
+        assertFalse("Error: cannot load user by id" + c.getCount(), c.getCount() == 0);
+        c.close();
+    }
     public void testProvider () {
 
         Database database = new Database(
@@ -187,6 +190,7 @@ public class TestContentProvider extends AndroidTestCase {
         SQLiteDatabase db = database.getWritableDatabase();
         assertEquals(true, db.isOpen());
 
+        Cursor c;
         // testing insert using URI
 
         AddUser("ex@ex.com", "exexex", "1");
@@ -200,6 +204,7 @@ public class TestContentProvider extends AndroidTestCase {
 
         //Test confs actions
         AddConf("asd", "!23", "1");
+        getConfByID("1");
 
         UpdateConf("1", "aaa", "!we", "1");
         checkLastConfStatus();
@@ -226,7 +231,8 @@ public class TestContentProvider extends AndroidTestCase {
         userLogin();
 
         //Get invites
-        getInvites();
+        c = DataProviderFunctions.getInstance().getInvitesByDocID(mContext, "1");
+        assertFalse("Error, Can fetch rejected invites", c.getCount() > 0);
         //Get confs
         getConfs();
 
@@ -234,6 +240,7 @@ public class TestContentProvider extends AndroidTestCase {
         getTopics();
         database.close();
         db.close();
+        c.close();
     }
 
     @Override

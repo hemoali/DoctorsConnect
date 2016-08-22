@@ -122,7 +122,15 @@ public class DataProviderFunctions {
         CursorLoader cursorLoader = new CursorLoader(context, Contract.ConfsEntry.CONTENT_URI_GET_CONFS,
                 null, null, null, null);
         Cursor c = cursorLoader.loadInBackground();
-        c.moveToFirst();
+        if (c != null & c.getCount() > 0) c.moveToFirst();
+        return c;
+    }
+
+    public Cursor getConfByID (String id, Context context) {
+        CursorLoader cursorLoader = new CursorLoader(context, Contract.ConfsEntry.CONTENT_URI_GET_CONF_BY_ID.buildUpon().appendPath(id).build(),
+                null, null, null, null);
+        Cursor c = cursorLoader.loadInBackground();
+        if (c != null & c.getCount() > 0) c.moveToFirst();
         return c;
     }
 
@@ -162,5 +170,15 @@ public class DataProviderFunctions {
         Uri uri = context.getContentResolver().insert(Contract.InvitesEntry.CONTENT_URI_ADD_INVITE, values);
         if (uri == null) return -1;
         return ContentUris.parseId(uri);
+    }
+
+    public Cursor getInvitesByDocID (Context context, String doc_id) {
+        CursorLoader cursorLoader = new CursorLoader(context, Contract.InvitesEntry.CONTENT_URI_GET_INVITES.buildUpon().appendPath(doc_id).build(),
+                null, null, null, null);
+        Cursor c = cursorLoader.loadInBackground();
+        if (c != null && c.getCount() > 0) {
+            c.moveToFirst();
+        }
+        return c;
     }
 }
